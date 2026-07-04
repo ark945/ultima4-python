@@ -1,9 +1,13 @@
 {
   "mcpServers": {
     "ultima4": {
-      "command": "/home/ein/projects/ultimate_rewrite/u4py/.venv/bin/python",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/u4py/.venv/bin/python",
       "args": ["-m", "ultima4.agent.mcp_server"],
-      "env": { "PYTHONPATH": "/home/ein/projects/ultimate_rewrite/u4py" }
+      "cwd": "${CLAUDE_PROJECT_DIR:-.}/u4py",
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PROJECT_DIR:-.}/u4py",
+        "PYGAME_HIDE_SUPPORT_PROMPT": "1"
+      }
     }
   }
 }

@@ -1,8 +1,8 @@
 # Ultima IV — Python rewrite
 
 A faithful, then refactored-for-editability, Python port of *Ultima IV: Quest of the Avatar*
-(1987, Origin Systems), based on the community decompilation of the DOS executables
-(`../u4`, by ergonomy_joe).
+(1987, Origin Systems), based on the community decompilation of the DOS executables (by
+ergonomy_joe). It runs self-contained — clone and play, no original game files needed.
 
 This is an experiment in agent-driven rewriting. The end goal is a game whose code and
 content are legible enough that an agent can, at runtime:
@@ -19,8 +19,23 @@ the live "start here next" snapshot are in `ROADMAP.md`; per-session context is 
 
 **Single source of truth:** the game reads only plain-text/PNG assets at runtime — graphics from
 `assets/*.png`, intro/tarot text + menus from `data/intro/*.json`, NPC dialogue from
-`data/dialogue/*.json`. The original `.EGA`/`.TLK`/`SRC-TITLE` files are *import sources only*
-(converted once by the tools below); editing a PNG or JSON changes the game live, with no code change.
+`data/dialogue/*.json`, maps from `data/maps/*.txt`, the party seed from `data/party_start.json`.
+These are committed, so no original game files are needed; editing a PNG or JSON changes the game
+live, with no code change.
+
+## Play it with your agent
+
+The fun way to run this is to let an AI agent play while you **watch each turn**. In Claude Code:
+
+1. **Build once:** `./run test` (creates the venv, expects `81/81`).
+2. **Restart / reload Claude Code and approve the `ultima4` MCP server** when prompted (the repo
+   ships a `.mcp.json`). If no prompt appears, run `./run install-mcp` and restart.
+3. **Ask your agent to play** — e.g. *"play Ultima IV and take me through meeting Lord British."*
+   It drives the game through the MCP tools and each move renders in the conversation, so you
+   follow along.
+
+Prefer a live game window (a real display, not SSH)? `./run watch` animates an agent playing on
+screen; `./run` plays it yourself with the keyboard; `./run demo` lists scripted set-pieces.
 
 ## Layout
 

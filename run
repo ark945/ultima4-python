@@ -4,8 +4,6 @@
 #   ./run            play the game (EGA)
 #   ./run play cga   play in CGA colors
 #   ./run talk       headless Talk demo (no window)
-#   ./run dump       export all .TLK dialogue to data/dialogue/*.json
-#   ./run maps       import WORLD.MAP/.ULT/.DNG to editable data/maps/*.txt
 #   ./run demo       play a scripted live demo (./run demo for the list)
 #   ./run agent-play drive the game as an agent via UltimaEnv (observe/act, stateless replay)
 #   ./run agent-demo run the reference example agent (examples/random_agent.py)
@@ -27,19 +25,22 @@ PY="$VENV/bin/python"
 
 # --- bootstrap the venv if it (or its deps) are missing ----------------------
 ensure_venv() {
+    # All bootstrap chatter goes to stderr — stdout must stay clean so `./run mcp` can be a
+    # valid MCP stdio server (the protocol stream is stdout; a stray echo corrupts the handshake).
     if [ ! -x "$PY" ]; then
-        echo "[run] creating venv at $VENV ..."
+        echo "[run] creating venv at $VENV ..." >&2
         if ! python3 -m venv "$VENV" 2>/dev/null; then
             echo "[run] ERROR: could not create venv. Install python3-venv:" >&2
             echo "      sudo apt install python3-venv" >&2
             exit 1
         fi
-        "$PY" -m pip install --quiet --upgrade pip
+        "$PY" -m pip install --quiet --upgrade pip >&2
     fi
-    # Install/verify dependencies (cheap no-op once satisfied).
-    if ! "$PY" -c "import pygame, PIL" 2>/dev/null; then
-        echo "[run] installing dependencies (pygame, pillow) ..."
-        "$PY" -m pip install --quiet -r "$APP/requirements.txt"
+    # Install/verify dependencies (cheap no-op once satisfied). Redirect BOTH streams: importing
+    # pygame prints a banner to stdout, which would corrupt `./run mcp`'s MCP stdio protocol.
+    if ! PYGAME_HIDE_SUPPORT_PROMPT=1 "$PY" -c "import pygame, PIL" >/dev/null 2>&1; then
+        echo "[run] installing dependencies (pygame, pillow) ..." >&2
+        "$PY" -m pip install --quiet -r "$APP/requirements.txt" >&2
     fi
 }
 
@@ -70,7 +71,7 @@ case "$cmd" in
             exit 1
         fi
         claude mcp remove ultima4 >/dev/null 2>&1 || true     # idempotent: replace any prior entry
-        claude mcp add -s "$scope" ultima4 -e PYTHONPATH="$APP" -- "$PY" -m ultima4.agent.mcp_server
+        claude mcp add -s "$scope" ultima4 -e PYTHONPATH="$APP" -e PYGAME_HIDE_SUPPORT_PROMPT=1 -- "$PY" -m ultima4.agent.mcp_server
         echo
         echo "[install-mcp] Registered MCP server 'ultima4' (scope: $scope)."
         echo "              Restart Claude Code; its tools then appear as mcp__ultima4__* "

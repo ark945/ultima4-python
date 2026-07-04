@@ -31,24 +31,41 @@ Examples of getting this wrong (don't repeat): the animation tick is the DOS **i
 
 ## Playing the game as an agent (if the human asks you to play / demo it)
 
-This game is built to be **played by you**. If the user asks you to play, demo, or explore the
-game, do it — here's how, in order of preference:
+This game is built to be **played by you, with the human watching**. The entire point is that the
+person sees the world and your moves **turn by turn**. So the rule is:
 
-1. **MCP tools (preferred).** This repo ships a `.mcp.json`, so opening it in Claude Code makes an
-   `ultima4` MCP server available (approve it if prompted; tools are named `mcp__ultima4__*`). Play
-   the loop: `new_game(seed)` → `observe()` → choose from the returned `legal_actions` → `act(...)`
-   → repeat. Read the observation's `view_ascii`, `visible`, `standing_on`, and `messages` to
-   decide. If the tools aren't present yet (not approved / not restarted), use option 2 — don't
-   block.
-2. **CLI (zero-setup, always works).** `./run agent-play --do "move N" --do "key T" ...` rebuilds
-   from the seed and replays the whole action list each call (it's stateless and deterministic),
-   printing the observation + `legal_actions`. Append one `--do` per turn to play on. Or run the
-   reference policy: `./run agent-demo`.
-3. **Let the human watch:** `./run watch` plays live in the game window (the character moves/talks/
-   fights on screen); `./run demo` lists scripted set-piece playthroughs.
+> **Play in the mode the human can watch. NEVER silently drop into a headless run that shows them
+> nothing.** If the watchable mode isn't ready yet, set it up and hand off for a restart — do not
+> "play" headlessly as a substitute.
+
+### Preferred — MCP tools (the human watches each turn inline)
+This repo ships a portable `.mcp.json`, so opening the repo in Claude Code offers an `ultima4` MCP
+server (tools `mcp__ultima4__*`). Every `observe()` / `act()` renders **in the conversation**, so
+the human follows every turn. Loop: `new_game(seed)` → `observe()` → pick from `legal_actions` →
+`act(...)` → repeat, reading `view_ascii` / `visible` / `standing_on` / `messages` to decide.
+
+**If the `mcp__ultima4__*` tools are NOT available yet** (fresh clone / not approved / not
+restarted) — this is the common first-run case — **set them up, then STOP and hand off. Do not
+headless-play instead:**
+1. Build + confirm once (also creates the venv the server runs on): `./run test` (expect 81/81).
+2. Say to the human, roughly:
+   > "The game's ready. Please **restart Claude Code** (or reload this window) and **approve the
+   > `ultima4` server** when prompted — then tell me to go and I'll play it so you can watch each
+   > turn." *(If no approval prompt appears, run `./run install-mcp` and restart.)*
+3. **Wait for them.** After the restart the tools appear; then play via MCP.
+
+### Human watches a live game window (needs a display)
+`./run watch` plays live in the real pygame window (the character moves/talks/fights on screen);
+`./run demo` lists scripted set-piece playthroughs. Great when the human is at the machine with a
+display — not over plain SSH / headless.
+
+### Headless CLI — for YOUR own testing, not a user-facing playthrough
+`./run agent-play --do "move N" --do "key T" ...` replays the action list statelessly and prints the
+observation + `legal_actions`; `./run agent-demo` runs the reference policy. Use these to reason,
+script, or self-test — **not** as the way you play *for a human who wanted to watch* (they see almost
+nothing). Only play a real session this way if the human explicitly asks for an unattended/automated run.
 
 **Action grammar** (same everywhere): `"move N|S|E|W"`, `"key <LETTER>"` (T=Talk, E=Enter, C=Cast,
 Z=Ztats, K=Klimb, D=Descend, X=eXit…), `"say <text>"` (into an active Talk/shop), `"pass"`. The
 full observe/act contract is in `u4py/docs/AGENTS.md`. Goal of a playthrough is up to the human;
-the win condition is the Abyss/Codex (`observation["won"]`). To wire the MCP server on a fresh
-machine: `./run install-mcp` (one command, user scope).
+the win condition is the Abyss/Codex (`observation["won"]`).
