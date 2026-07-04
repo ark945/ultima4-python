@@ -44,12 +44,11 @@ From the repo root (one level up), `./run` bootstraps the venv and dispatches:
 
 - `./run` — play (title → intro → game); `./run town <name>` — debug-boot straight into a town.
 - `./run test` — the headless self-test suite (keep it green).
-- **Import tools** (regenerate the runtime assets from the originals in `data/`; run once, or after
-  dropping in fresh originals):
-  - `./run gfx` — `.EGA` graphics → `assets/*.png` (tiles, font, intro pictures).
-  - `./run intro` — `SRC-TITLE/TITLE_*.C` → `data/intro/{questions,cards,narrative,menus}.json`.
-  - `./run dump` — `.TLK` dialogue → `data/dialogue/*.json`.
-- `./run tiles` — regenerate the tile reference (`docs/TILES.md`); `./run agent` — the editor/tutor console.
+- The runtime assets are **pre-generated and committed** — editable plain text/PNG (`data/maps/*.txt`,
+  `data/dialogue/*.json`, `data/intro/*.json`, `data/party_start.json`, `assets/*.png`). The original
+  copyrighted binaries and the one-shot import tools that produced these have been removed; the game
+  needs no original files to run.
+- `./run tiles` — regenerate the tile reference (`docs/TILES.md`) from `assets/shapes.png`; `./run agent` — the editor/tutor console.
 
 ## Tile reference — `docs/TILES.md`
 

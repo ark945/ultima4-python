@@ -14,8 +14,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ultima4.graphics import decode_shapes
-from ultima4.savefile import load_bytes
+from ultima4.graphics import load_tiles_png
 from ultima4.tiles import TILE_NAMES, WALKABLE_ON_FOOT
 
 TILE = 16
@@ -23,7 +22,7 @@ ZOOM = 3
 
 
 def main() -> None:
-    tiles = decode_shapes(load_bytes("SHAPES.EGA"))     # list of 16x16 RGB byte buffers
+    tiles = load_tiles_png("ega")                       # 256 16x16 RGB buffers, from assets/shapes.png
     docs = Path(__file__).resolve().parent.parent / "docs"
     img_dir = docs / "tiles"
     img_dir.mkdir(parents=True, exist_ok=True)
@@ -44,7 +43,7 @@ def main() -> None:
             "skill, e.g. `/rename-tile 0x4A -> stone_altar` (it updates the source, cascades "
             "animation-frame names, regenerates this file, and runs the tests).",
             "",
-            f"All {len(tiles)} tiles from `SHAPES.EGA`, laid out as a grid so you can see "
+            f"All {len(tiles)} tiles from `assets/shapes.png`, laid out as a grid so you can see "
             "them together (the hex id is each tile's `(row,col)` — row = high nibble, "
             "col = low nibble). Cells marked **?** still need a name.",
             ""]

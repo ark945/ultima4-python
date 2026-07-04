@@ -52,9 +52,6 @@ case "$cmd" in
     play)  exec "$PY" play.py "${@:-ega}" ;;
     town)  exec "$PY" play.py ega --town "${1:-britain}" ;;
     talk)  exec "$PY" -m tools.talk_demo "$@" ;;
-    gfx)   exec "$PY" -m tools.convert_graphics "$@" ;;
-    intro) exec "$PY" -m tools.extract_intro "$@" ;;
-    maps)  exec "$PY" -m tools.convert_maps "$@" ;;
     demo)  exec "$PY" -m tools.demo "$@" ;;
     agent-play) exec "$PY" -m tools.agent_play "$@" ;;
     agent-demo) exec "$PY" examples/random_agent.py "$@" ;;
@@ -81,7 +78,6 @@ case "$cmd" in
         echo "              Check it:  claude mcp list      Undo it:  claude mcp remove ultima4"
         exit 0 ;;
     agent) exec "$PY" -m tools.agent_repl "$@" ;;
-    dump)  exec "$PY" -m tools.dump_dialogue "$@" ;;
     tiles) exec "$PY" -m tools.dump_tiles "$@" ;;
     save)  exec "$PY" -m tools.inspect_save "${1:-data/PARTY.SAV}" ;;
     test)  exec "$PY" -m tools.selftest "$@" ;;

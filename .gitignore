@@ -13,3 +13,8 @@ __pycache__/
 
 # Decompiled DOS source — a nested git repo; reference only, not needed to run/play.
 /u4/
+
+# Runtime saves the player writes with Quit&Save (Journey Onward reloads them). The
+# committed seed is the editable data/party_start.json, never a binary .SAV.
+u4py/data/*.SAV
+u4py/data/*.sav

@@ -22,7 +22,7 @@ from . import (combat, dungeon, hazards, items, mixing, moongate, monsters, shri
 from .dialogue import Conversation, TalkData, load_for_location
 from .lb import LordBritish, level_for_xp
 from .location import Location, NPC
-from .savefile import load_party, save_party
+from .savefile import load_party, load_starting_party, save_party
 from .shops import open_shop, SHOP_SIGN_Y
 from .state import Party
 from .tiles import (is_walkable, is_sign_glyph, SLOW_PROGRESS, tile_name,
@@ -51,7 +51,7 @@ _DIR_KEYS = {**_ARROW_KEYS, "N": DIR_N, "S": DIR_S, "E": DIR_E, "W": DIR_W}
 class Game:
     def __init__(self, party: Optional[Party] = None, world: Optional[World] = None):
         # C: U4_INIT.C C_C51C — load save + map, set moon-driven moongate dests, go outdoors.
-        self.party = party if party is not None else load_party()
+        self.party = party if party is not None else load_starting_party()
         self.world = world if world is not None else World.load()
         self.mode = MOD_OUTDOORS
         self.location: Optional[Location] = None   # current town/castle when MOD_BUILDING

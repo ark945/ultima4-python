@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ultima4.data_tables import (CLASS_NAMES, CLASS_COMPANION, CLASS_HOME,
                                  START_X, START_Y)
 from ultima4.state import Party
-from ultima4.savefile import load_bytes, DATA_DIR
+from ultima4.savefile import load_template_party, DATA_DIR
 
 AVATAR_ON_FOOT = 0x1F  # TIL_1F
 
@@ -40,7 +40,7 @@ def resolve_class(value: str) -> int:
 
 
 def new_party(virtue: int, name: str) -> Party:
-    party = Party.from_bytes(load_bytes("PARTY.NEW"))      # template of 8 companions
+    party = load_template_party()                          # template of 8 companions (party_template.json)
     party.chara[0], party.chara[virtue] = party.chara[virtue], party.chara[0]  # C: the swap
     party.chara[0].name = name
     party.member_count = 1                                  # C: Party.f_1d8 = 1

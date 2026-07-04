@@ -82,6 +82,35 @@ class Character:
             self.status.encode("latin-1")[:1] or b"\x00",
         )
 
+    def to_json(self) -> dict:
+        """Human-readable dict for the committed party seeds (was a raw tChara dump).
+        Exact-byte fields (_pad0e, and name bytes after the NUL) are emitted as hex ONLY
+        when they'd otherwise not round-trip — so a clean slot stays clean and legible."""
+        d = {
+            "name": self.name, "sex": self.sex, "class": self.char_class, "status": self.status,
+            "hp": self.hp, "hp_max": self.hp_max, "xp": self.xp,
+            "str": self.str_, "dex": self.dex, "int": self.intel, "mp": self.mp,
+            "weapon": self.weapon, "armor": self.armor,
+        }
+        if self._pad0e != b"\x00\x00":
+            d["pad0e_hex"] = self._pad0e.hex()
+        clean = self.name.encode("latin-1")[:16].ljust(16, b"\x00")
+        if self.name_raw is not None and self.name_raw != clean:
+            d["name_raw_hex"] = self.name_raw.hex()   # preserve unused-slot garbage byte-exact
+        return d
+
+    @classmethod
+    def from_json(cls, d: dict) -> "Character":
+        return cls(
+            hp=d.get("hp", 0), hp_max=d.get("hp_max", 0), xp=d.get("xp", 0),
+            str_=d.get("str", 0), dex=d.get("dex", 0), intel=d.get("int", 0), mp=d.get("mp", 0),
+            weapon=d.get("weapon", 0), armor=d.get("armor", 0),
+            name=d.get("name", ""), sex=d.get("sex", "M"),
+            char_class=d.get("class", "A"), status=d.get("status", "G"),
+            _pad0e=bytes.fromhex(d["pad0e_hex"]) if "pad0e_hex" in d else b"\x00\x00",
+            name_raw=bytes.fromhex(d["name_raw_hex"]) if "name_raw_hex" in d else None,
+        )
+
     @property
     def alive(self) -> bool:        # C: isCharaAlive -> _stat != 'D'
         return self.status != "D"
@@ -223,6 +252,53 @@ class Party:
         )
         assert len(out) == _PARTY_SIZE
         return bytes(out)
+
+    def to_json(self) -> dict:
+        """The whole party as an editable dict — the committed seed format that replaces
+        the binary PARTY.SAV/PARTY.NEW dumps. Round-trips byte-exact: `Party.from_json(
+        p.to_json()).to_bytes() == p.to_bytes()`."""
+        return {
+            "counter": self.counter, "moves": self.moves,
+            "chara": [c.to_json() for c in self.chara],
+            "food": self.food, "gold": self.gold, "karma": list(self.karma),
+            "torches": self.torches, "gems": self.gems, "keys": self.keys,
+            "sextants": self.sextants,
+            "armors": list(self.armors), "weapons": list(self.weapons),
+            "reagents": list(self.reagents), "mixtures": list(self.mixtures),
+            "items": self.items, "x": self.x, "y": self.y,
+            "stones": self.stones, "runes": self.runes,
+            "member_count": self.member_count, "tile": self.tile, "flying": self.flying,
+            "trammel": self.trammel, "felucca": self.felucca, "ship": self.ship,
+            "met_lb": self.met_lb, "last_holeup": self.last_holeup,
+            "last_found": self.last_found, "last_meditation": self.last_meditation,
+            "last_karma_convo": self.last_karma_convo,
+            "out_x": self.out_x, "out_y": self.out_y,
+            "dir": self.dir, "z": self.z, "loc": self.loc,
+        }
+
+    @classmethod
+    def from_json(cls, d: dict) -> "Party":
+        return cls(
+            counter=d.get("counter", 0), moves=d.get("moves", 0),
+            chara=[Character.from_json(c) for c in d.get("chara", [])]
+                  or [Character() for _ in range(8)],
+            food=d.get("food", 0), gold=d.get("gold", 0),
+            karma=list(d.get("karma", [0] * 8)),
+            torches=d.get("torches", 0), gems=d.get("gems", 0),
+            keys=d.get("keys", 0), sextants=d.get("sextants", 0),
+            armors=list(d.get("armors", [0] * 8)), weapons=list(d.get("weapons", [0] * 16)),
+            reagents=list(d.get("reagents", [0] * 8)), mixtures=list(d.get("mixtures", [0] * 26)),
+            items=d.get("items", 0), x=d.get("x", 0), y=d.get("y", 0),
+            stones=d.get("stones", 0), runes=d.get("runes", 0),
+            member_count=d.get("member_count", 0), tile=d.get("tile", 0),
+            flying=d.get("flying", 0), trammel=d.get("trammel", 0),
+            felucca=d.get("felucca", 0), ship=d.get("ship", 0),
+            met_lb=d.get("met_lb", 0), last_holeup=d.get("last_holeup", 0),
+            last_found=d.get("last_found", 0), last_meditation=d.get("last_meditation", 0),
+            last_karma_convo=d.get("last_karma_convo", 0),
+            out_x=d.get("out_x", 0), out_y=d.get("out_y", 0),
+            dir=d.get("dir", 0), z=d.get("z", 0), loc=d.get("loc", 0),
+        )
 
     @property
     def members(self) -> List[Character]:

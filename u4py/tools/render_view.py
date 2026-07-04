@@ -17,23 +17,23 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ultima4.graphics import decode_shapes  # noqa: E402
-from ultima4.savefile import load_bytes, load_party  # noqa: E402
+from ultima4.graphics import load_tiles_png  # noqa: E402
+from ultima4.savefile import load_starting_party  # noqa: E402
 from ultima4.world import World  # noqa: E402
 
 AVATAR_TILE = 0x1F  # TIL_1F: on-foot party
 
 
 def tile_images(which: str):
-    fname = "SHAPES.CGA" if which == "cga" else "SHAPES.EGA"
-    tiles = decode_shapes(load_bytes(fname))
+    fname = "assets/shapes_cga.png" if which == "cga" else "assets/shapes.png"
+    tiles = load_tiles_png(which)
     return [Image.frombytes("RGB", (16, 16), t) for t in tiles], fname
 
 
 def main(which: str = "cga") -> None:
     imgs, fname = tile_images(which)
     world = World.load()
-    party = load_party()
+    party = load_starting_party()
 
     # Avatar overworld position (C: C_26B6 uses Party._x/_y when loc < 0x11).
     cx, cy = party.x, party.y

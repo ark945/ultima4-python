@@ -261,37 +261,16 @@ Then `./run agent-demo --seed 7 --max-turns 40` runs the reference agent in the 
 
 ---
 
-## Copyright / data licensing — read before redistributing
+## Attribution
 
-**The engine code in this repository is the project's own work** (ported from the decompiled
-DOS source as an original Python implementation) and is offered under the project's license.
+**The engine code in this repository is the project's own work** — an original Python
+implementation ported from the decompiled DOS source — and is offered under the project's license.
 
-**The game DATA is a different matter.** Everything under `u4py/data/` and the assets converted
-from it — `data/maps/*.txt`, `data/dialogue/*.json`, `assets/*.png`, and similar — **derives from
-Ultima IV: Quest of the Avatar**, which is **copyrighted by Origin Systems / Electronic Arts**.
+The game content (`data/maps/*.txt`, `data/dialogue/*.json`, `data/intro/*.json`,
+`data/party_start.json`, `assets/*.png`) derives from **Ultima IV: Quest of the Avatar**, created
+by Lord British (Richard Garriott) and Origin Systems, which Origin/EA released as **freeware**.
+This project is a free, non-commercial fan port and toy — a small world for people (and their
+agents) to explore and edit — with no affiliation to or endorsement by Origin Systems or Electronic
+Arts. All Ultima IV trademarks and copyrights remain with their owners.
 
-Ultima IV was made available as a *free download* historically, and that is wonderful — but
-**"free to download" is NOT the same as "licensed to redistribute in a derived/converted
-format."** Re-packaging the maps, dialogue, and graphics into new file formats and shipping them
-is a redistribution of a derivative work, which the original "free download" permission may not
-cover.
-
-**Recommended distribution model — ship the engine only:**
-
-1. Distribute the **engine** (this package) without the `data/` directory or converted assets.
-   The `pyproject.toml` here deliberately does **not** bundle game data in the wheel.
-2. Have each user **bring their own original Ultima IV data files** (the files they already have
-   the right to use), and place them in `u4py/data/`.
-3. Run the import tools to regenerate the editable assets **locally**:
-
-   ```bash
-   ./run maps    # WORLD.MAP / *.ULT / *.DNG -> data/maps/*.txt
-   ./run gfx     # EGA/PIC graphics          -> assets/*.png
-   ./run dump    # *.TLK dialogue            -> data/dialogue/*.json
-   ```
-
-This keeps copyrighted content out of your distribution while letting anyone who legitimately
-owns Ultima IV play and edit the game.
-
-> This is practical guidance, **not legal advice.** Before redistributing any game data — in any
-> format — verify the licensing terms for your situation.
+If you are a rights holder and would like something changed, please open an issue.

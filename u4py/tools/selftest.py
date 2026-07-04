@@ -13,7 +13,6 @@ from ultima4.game import Game
 from ultima4.constants import MOD_BUILDING, MOD_OUTDOORS, MOD_COMBAT, MOD_DUNGEON
 from ultima4.data_tables import PLACE_X, PLACE_Y, LOCATION_FILES
 from ultima4.dialogue import TalkData, Conversation
-from ultima4.savefile import load_bytes
 from ultima4.state import Party
 from ultima4.tiles import is_walkable
 
@@ -205,17 +204,15 @@ def _():
     # 2) a glyph silently changed -> crc mismatch fires (NOT a silently-wrong map)
     bad = lines[:]; row = bad[grid0]; bad[grid0] = row[0] + ("~" if row[1] != "~" else "!") + row[2:]
     assert _raises(bad), "altered tile not rejected"
-@check("graphics: LZW decompresses a picture to 320x200, and SHAPES/CHARSET decode")
+@check("graphics: the canonical spritesheet PNGs slice to 256 tiles + a full charset")
 def _():
-    sys.path.insert(0, str(Path(__file__).resolve().parent))   # tools/ for lzw
-    from lzw import decompress
-    from ultima4.graphics import _decode_ega, EGA_PALETTE, decode_shapes, decode_charset
-    raw = decompress(load_bytes("TITLE.EGA"))
-    assert len(raw) == 320 * 200 // 2                          # 32000B @ 4bpp
-    img = _decode_ega(raw, 1, 320, 200, EGA_PALETTE)[0]
-    assert len(img) == 320 * 200 * 3                           # RGB buffer
-    assert len(decode_shapes(load_bytes("SHAPES.EGA"))) == 256
-    assert len(decode_charset(load_bytes("CHARSET.EGA"))) == 256
+    # The .EGA originals are gone; assets/*.png is the single source of truth. Verify the
+    # committed sheets slice to the right shape (16x16 tiles, 8x8 glyphs) the runtime relies on.
+    from ultima4.graphics import load_tiles_png, load_charset_png
+    tiles = load_tiles_png("ega")
+    assert len(tiles) == 256 and all(len(t) == 16 * 16 * 3 for t in tiles)
+    glyphs = load_charset_png("ega")
+    assert len(glyphs) == 256 and all(len(g) == 8 * 8 * 3 for g in glyphs)
 
 
 @check("text: word-wrap honors width + embedded newlines; pagination fills the window")
@@ -336,12 +333,12 @@ def _():
     assert d2.done and d2.start_load
 
 
-@check("save/load: PARTY.SAV round-trips byte-exact; Quit&Save guards town, resume reloads")
+@check("save/load: the seed loads, a binary save round-trips, Quit&Save guards town + resumes")
 def _():
     from ultima4 import savefile
     from ultima4.state import Party
-    # byte-exact round-trip through a temp save (don't touch the real PARTY.SAV)
-    p = savefile.load_party()
+    # byte-exact round-trip through a temp binary save (the Quit&Save format)
+    p = savefile.load_starting_party()
     p.x, p.y, p.moves = 123, 45, 999
     before = p.to_bytes()
     savefile.save_party(p, "TEST_PARTY.SAV")
@@ -355,9 +352,9 @@ def _():
     g.messages.clear()
     g.cmd_quit()
     assert any("Not Here" in m for m in g.messages) and not g.quit_requested
-    # Quit&Save on the overworld writes PARTY.SAV and asks the driver to exit; resume reloads it.
+    # Quit&Save on the overworld writes a runtime PARTY.SAV and asks the driver to exit;
+    # resume reloads it. (PARTY.SAV is a throwaway save now, not the committed seed.)
     real = savefile.DATA_DIR / "PARTY.SAV"
-    backup = real.read_bytes()
     try:
         g2 = Game(); g2.party.x, g2.party.y, g2.party.moves = 200, 88, 7
         g2.cmd_quit()
@@ -365,7 +362,7 @@ def _():
         g3 = Game(); g3.load_saved()
         assert (g3.party.x, g3.party.y) == (200, 88) and g3.mode == MOD_OUTDOORS
     finally:
-        real.write_bytes(backup)                           # restore the player's real save
+        real.unlink(missing_ok=True)                        # a runtime save; not committed
 
 
 @check("dialogue: JSON is the single runtime source (all 16 towns), .TLK never read at runtime")
@@ -935,24 +932,28 @@ def _():
 
 
 # --- state ------------------------------------------------------------------
-@check("save round-trips byte-exact")
+@check("party seed round-trips: JSON -> Party -> bytes -> Party is byte-stable")
 def _():
-    raw = load_bytes("PARTY.SAV")
-    assert Party.from_bytes(raw).to_bytes() == raw
+    from ultima4.savefile import load_starting_party
+    p = load_starting_party()                       # from party_start.json
+    raw = p.to_bytes()
+    assert Party.from_bytes(raw).to_bytes() == raw          # bytes are self-consistent
+    assert Party.from_json(p.to_json()).to_bytes() == raw   # JSON is a lossless mirror
 
 
 # --- dialogue decode --------------------------------------------------------
-@check(".TLK decodes to 16 NPCs with Iolo first")
+@check("dialogue JSON gives 16 NPCs with Iolo first (Britain)")
 def _():
-    t = TalkData.load("BRITAIN.TLK")
+    from ultima4.dialogue import load_for_location
+    t = load_for_location(6)                          # 6 = Britain
     assert len(t.records) == 16
     assert t.for_npc(1).name == "Iolo" and t.for_npc(1).keyword1 == "PLAY"
 
 
 @check("Dialogue to_dict/from_dict round-trips")
 def _():
-    for d in TalkData.load("BRITAIN.TLK").records:
-        from ultima4.dialogue import Dialogue
+    from ultima4.dialogue import load_for_location, Dialogue
+    for d in load_for_location(6).records:
         assert Dialogue.from_dict(d.to_dict()) == d
 
 
@@ -975,7 +976,8 @@ def _():
 def _():
     g = britain()
     # Simulate the editor agent rewriting Iolo's job as plain text.
-    edited = [d.to_dict() for d in TalkData.load("BRITAIN.TLK").records]
+    from ultima4.dialogue import load_for_location
+    edited = [d.to_dict() for d in load_for_location(6).records]
     edited[0]["job"] = "I test the port."
     g._talk_cache[6] = TalkData.from_json(edited)   # what load_for_location would return
     npc = next(n for n in g.location.npcs if n.tlkidx == 1)

@@ -5,14 +5,25 @@ each item lands with a faithful port (C function cited), a headless check, and a
 update. The North Star: a playable game whose state & content are clean plain-text data,
 driven by two runtime agents (editor = writes, tutor = reads). See the project memory.
 
-## ⏯ Start here next session (snapshot 2026-06-11)
+## ⏯ Start here next session (snapshot 2026-07-04)
+**✅ ORIGINALS PURGED.** All original copyrighted binaries (`.EGA/.PIC/.ULT/.DNG/.TLK/.MAP/.CON`,
+the DOS executables) and the five one-shot import tools (`convert_graphics`, `extract_intro`,
+`convert_maps`, `dump_dialogue`, `lzw`) plus the decompiled `u4/` source tree have been **deleted**.
+The two load-bearing party binaries were text-ified: `PARTY.SAV` → `data/party_start.json`,
+`PARTY.NEW` → `data/party_template.json` (byte-exact round-trip via `Party.to_json/from_json`).
+The game now runs with **zero original files**. `PARTY.SAV` is now only a runtime save (gitignored).
+
+Ships as a **free, non-commercial fan port / agent toy** — public is fine (U4 is Origin/EA
+freeware; see `docs/AGENTS.md` for attribution). The purge above makes the repo self-contained:
+clone → play, no original files needed.
+
 **Build is green: `./run test` = 81/81.** Runnable: `./run` (title → intro → game), `./run town britain`
 (debug boot), `./run demo` (scripted live playthroughs), `./run agent-play` / `./run agent-demo` /
 `./run watch` / `./run mcp` (the agent-playable stack — UltimaEnv observe/act, reference agent, live
-human-watch window, MCP server), `./run gfx` / `./run intro` / `./run dump` / `./run maps` (import
-tools). Single
-source of truth now holds for graphics (PNG), intro/tarot + menus (JSON), dialogue (JSON), **and all
-maps — overworld/towns/dungeons (editable ascii-tilemap, `data/maps/*.txt`)**; originals import-only.
+human-watch window, MCP server), `./run tiles` (regenerate the tile ref). Single source of truth
+now holds for graphics (PNG), intro/tarot + menus (JSON), dialogue (JSON), the party seeds (JSON),
+**and all maps — overworld/towns/dungeons (editable ascii-tilemap, `data/maps/*.txt`)**; the import
+tools that produced them are gone (recover from git history ≤ `b5fa243` if ever needed).
 **Runtime reads zero original binaries** (only PNG/JSON/ascii-maps + `PARTY.SAV`) — proven by booting
 the game with all 27 map binaries removed. See the Phase-4 "Maps are editable ascii-tilemaps" entry +
 its deletion-readiness audit for what a full `data/` purge still needs (rune `.EGA`, `.CON` arenas).

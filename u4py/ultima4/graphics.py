@@ -13,7 +13,10 @@ pygame.image.frombuffer(buf, (w, h), "RGB").
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import List
+
+ASSETS = Path(__file__).resolve().parent.parent / "assets"   # canonical PNGs (the source of truth)
 
 # CGA palette 1, high-intensity (C: common.c U4_PALETTE). 0=black 1=cyan 2=magenta 3=white.
 CGA_PALETTE = [(0x1F, 0x1F, 0x1F), (0x1F, 0xE0, 0xE0), (0xE0, 0x1F, 0xE0), (0xE0, 0xE0, 0xE0)]
@@ -103,3 +106,25 @@ def decode_charset(data: bytes) -> List[bytes]:
     if len(data) % 32 == 0:                       # EGA: 32 bytes/glyph (8x8 @ 4bpp)
         return _decode_ega(data, len(data) // 32, CHAR_W, CHAR_H, EGA_PALETTE)
     raise ValueError(f"CHARSET file size {len(data)} is neither CGA nor EGA")
+
+
+def _slice_png(name: str, cell: int) -> List[bytes]:
+    """Slice a 16-wide spritesheet PNG in `assets/` into `cell`x`cell` RGB byte buffers —
+    the same shape the decode_* functions produced from the original .EGA, but read from
+    the committed PNG (the single source of truth now the .EGA originals are gone)."""
+    from PIL import Image                          # lazy: only tools/tests need this
+    sheet = Image.open(ASSETS / name).convert("RGB")
+    cols = sheet.width // cell
+    return [sheet.crop(((i % cols) * cell, (i // cols) * cell,
+                        (i % cols) * cell + cell, (i // cols) * cell + cell)).tobytes()
+            for i in range((sheet.width // cell) * (sheet.height // cell))]
+
+
+def load_tiles_png(which: str = "ega") -> List[bytes]:
+    """256 map tiles as 16x16 RGB buffers, from assets/shapes.png (was SHAPES.EGA)."""
+    return _slice_png("shapes_cga.png" if which == "cga" else "shapes.png", TILE_W)
+
+
+def load_charset_png(which: str = "ega") -> List[bytes]:
+    """Font glyphs as 8x8 RGB buffers, from assets/charset.png (was CHARSET.EGA)."""
+    return _slice_png("charset_cga.png" if which == "cga" else "charset.png", CHAR_W)
