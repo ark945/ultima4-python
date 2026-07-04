@@ -78,6 +78,8 @@ script, or self-test — **not** as the way you play *for a human who wanted to 
 nothing). Only play a real session this way if the human explicitly asks for an unattended/automated run.
 
 **Action grammar** (same everywhere): `"move N|S|E|W"`, `"key <LETTER>"` (T=Talk, E=Enter, C=Cast,
-Z=Ztats, K=Klimb, D=Descend, X=eXit…), `"say <text>"` (into an active Talk/shop), `"pass"`. The
+Z=Ztats, K=Klimb, D=Descend, X=eXit…), `"say <text>"` (into an active Talk/shop), `"pass"`, and the
+time primitives `"wait <seconds>"` / `"wait until moongate|moons_dark|trammel N|felucca N"` (the moons
+run on a real-time clock independent of moves; `wait` lets it advance — e.g. to catch a moongate). The
 full observe/act contract is in `u4py/docs/AGENTS.md`. Goal of a playthrough is up to the human;
 the win condition is the Abyss/Codex (`observation["won"]`).

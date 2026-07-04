@@ -11,6 +11,7 @@ tested headlessly and driven by any front-end (the pygame window in render.py).
 from __future__ import annotations
 
 import random
+import time
 from typing import Callable, Dict, List, Optional
 
 from .constants import (DIR_W, DIR_N, DIR_E, DIR_S, DIR_DX, DIR_DY,
@@ -67,6 +68,13 @@ class Game:
         self._moon_div = 0                                 # C: D_1668 divider (moons tick on time)
         self._moon_sub = 0                                 # C: D_1664 sub-counter
         self._moongate: Optional[tuple] = None             # (x, y, covered_tile) of the open gate
+        # The moons run on a real-time clock (C: int 0x1C ~18.2 Hz), independent of moves. We drive
+        # it lazily by elapsed wall time plus explicit wait()s, so headless and windowed advance the
+        # SAME way (catch_up_moons is called from observe/act and every render frame).
+        self._moon_ticks = 0                               # cascade ticks applied via the clock
+        self._moon_seconds = 0.0                           # game-seconds elapsed (wall + waits)
+        self._moon_wall_last = time.monotonic()            # last real time we synced from
+        self.moon_wallclock = True                         # False freezes wall time (deterministic tests)
         self.monsters: List = []                           # active overworld monsters (monsters.py)
         self.combat = None                                 # CombatState when MOD_COMBAT
         self._combat_return = (MOD_OUTDOORS, 0, 0)         # (mode, x, y) to restore after combat
@@ -234,6 +242,32 @@ class Game:
             moongate.tick_moons(self)
         # Per-move upkeep (food/status/MP/hull/death) lives in end_turn via upkeep.py
         # (C: C_1C53) — it is move-driven, not on this animation clock.
+
+    def catch_up_moons(self) -> None:
+        """Advance the real-time moon clock to 'now'. The moons run on a wall clock (int 0x1C,
+        ~18.2 Hz), independent of moves — so this applies however many ticks of real time have
+        elapsed since the last sync, plus any explicit wait()s. Called from observe/act (headless)
+        and every render frame (windowed), so both advance identically. Overworld-only, like the
+        original (the moon HUD / gate cascade run only from the overworld redraw)."""
+        now = time.monotonic()
+        if self.mode == MOD_OUTDOORS:
+            if self.moon_wallclock:
+                self._moon_seconds += now - self._moon_wall_last
+            if self._moongate is None:                     # the gate is always present outdoors
+                moongate._place_gate(self)
+            target = int(self._moon_seconds * moongate.MOON_HZ)
+            # Bound the catch-up after a long idle; the phase is cyclic, so a full cycle suffices.
+            delta = min(max(0, target - self._moon_ticks), moongate.FULL_CYCLE_TICKS)
+            for _ in range(delta):
+                moongate.tick_moons(self)
+            self._moon_ticks = target
+        self._moon_wall_last = now
+
+    def advance_moon_seconds(self, seconds: float) -> None:
+        """Fast-forward the moon clock by `seconds` of game-time — the `wait` primitive. Independent
+        of wall time, so replays and tests reproduce it exactly. No-op off the overworld."""
+        self._moon_seconds += max(0.0, seconds)
+        self.catch_up_moons()
 
     # --- dungeon input mode (C: U4_DNG.C DNG_main) ---------------------------
     def _dungeon_input(self, key: str) -> bool:

@@ -62,6 +62,9 @@ class LiveWindow:
             self.env = env_or_game
         else:
             self.env = UltimaEnv(game=env_or_game)
+        # The render loop drives the real-time moon clock (catch_up_moons per frame), so the env's
+        # observe/act must NOT also advance it (that would double-count and race the render thread).
+        self.env.drive_clock = False
 
         self.which = which
         self.fps = max(1, int(fps))
@@ -151,7 +154,7 @@ class LiveWindow:
 
             # 3) animate: moons + creature shuffle run on the wall clock, not on movement.
             self.phase += 1
-            self.game.tick_moons()
+            self.game.catch_up_moons()
 
             # 4) draw one frame with a caption the viewer can follow.
             play.draw_game(self.screen, self.assets, self.game, self.phase // 4,
@@ -211,7 +214,7 @@ class LiveWindow:
                 if ev.type == play.pygame.QUIT:
                     return
             self.phase += 1
-            self.game.tick_moons()
+            self.game.catch_up_moons()
             play.draw_game(self.screen, self.assets, self.game, self.phase // 4, banner=banner)
             self.clock.tick(self.fps)
 

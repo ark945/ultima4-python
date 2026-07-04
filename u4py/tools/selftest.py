@@ -471,6 +471,44 @@ def _():
     assert g2._felucca_ctr == frozen
 
 
+@check("moon clock: real wall-time advances the moons headlessly, independent of moves")
+def _():
+    g = Game(); g.party.loc = 0; g.mode = MOD_OUTDOORS
+    before = (g.party.trammel, g.party.felucca)
+    g._moon_wall_last -= 21.0                     # pretend ~21 s of real time elapsed (no moves)
+    g.catch_up_moons()
+    assert (g.party.trammel, g.party.felucca) != before, "wall-time did not advance the moons"
+    assert g._moongate is not None                # and a gate is present on the overworld
+
+
+@check("agent wait: observe() carries moons+gate; wait() advances the clock, moves never do")
+def _():
+    from ultima4.env import UltimaEnv
+    env = UltimaEnv(seed=7); env.game.moon_wallclock = False    # only explicit waits advance
+    o = env.observe()
+    assert "moons" in o and o["moons"]["gate"] is not None and "destination" in o["moons"]["gate"]
+    o2 = env.wait(21)                             # ~ one Trammel-phase of game-time
+    assert (o2["moons"]["trammel"], o2["moons"]["felucca"]) != (o["moons"]["trammel"], o["moons"]["felucca"])
+    m0 = (env.game.party.trammel, env.game.party.felucca)
+    env.act("move N"); env.act("move S")         # moves must not touch the clock
+    assert (env.game.party.trammel, env.game.party.felucca) == m0, "a move advanced the moons"
+    e2 = UltimaEnv(seed=7); e2.game.moon_wallclock = False       # deterministic replay
+    assert e2.wait(21)["moons"] == o2["moons"]
+
+
+@check("agent wait_until: reaches moons_dark and brings the gate adjacent when positioned")
+def _():
+    from ultima4.env import UltimaEnv
+    from ultima4.data_tables import MOONGATE_X, MOONGATE_Y
+    env = UltimaEnv(seed=7); env.game.moon_wallclock = False
+    d = env.wait_until("moons_dark", max_seconds=6000)
+    assert d["moons"]["trammel"] == 0 and d["moons"]["felucca"] == 0 and d["wait_reason"] == "condition met"
+    env.game.party.x, env.game.party.y = MOONGATE_X[2] - 1, MOONGATE_Y[2]   # next to the phase-2 spot
+    o = env.wait_until("trammel 2", max_seconds=6000)
+    assert o["moons"]["trammel"] == 2 and o["moons"]["gate"]["adjacent"]
+    assert "unknown wait_until" in (env.wait_until("banana").get("error") or "")   # bad cond reported
+
+
 # --- transport --------------------------------------------------------------
 @check("transport: board/exit, and a ship sails water but not land")
 def _():

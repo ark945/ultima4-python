@@ -358,7 +358,7 @@ def main(which: str = "ega", town: str = None) -> None:
         # whose only job is to hold animation at a constant *real-time* rate on any machine. A
         # fixed 18.2 Hz tick is the modern equivalent; ~4-tick divisor = the gentle creature shuffle.
         anim += 1
-        game.tick_moons()                               # moons run on this clock, not on movement
+        game.catch_up_moons()                           # moons run on this real-time clock, not on movement
         draw(anim // 4)
         clock.tick(DOS_TIMER_HZ)
     pygame.quit()

@@ -6,6 +6,16 @@ update. The North Star: a playable game whose state & content are clean plain-te
 driven by two runtime agents (editor = writes, tutor = reads). See the project memory.
 
 ## ⏯ Start here next session (snapshot 2026-07-04)
+**✅ MOONGATES ARE AGENT-USABLE (issues #4/#5).** The moons run on a **real-time clock** (int 0x1C
+~18.2 Hz), independent of moves — faithful to the original. It was frozen headless (no loop); now a
+single lazy wall-clock driver (`game.catch_up_moons`) advances it from observe/act (headless) AND
+every render frame (windowed), so both modes are mechanically identical. `observe()` now carries
+`moons:{trammel,felucca,gate:{x,y,destination,adjacent}}`. New turn-based **time primitives** let the
+agent advance the real-time clock without moving: `wait <seconds>` and `wait until moongate|moons_dark|
+trammel N|felucca N` (MCP tools `wait`/`wait_until`; also in `agent-play`). Moves still never touch the
+moons (`end_turn` untouched). `game.moon_wallclock=False` freezes wall-time for deterministic tests.
+`./run test` = 86/86.
+
 **✅ SHIPPED PUBLIC + onboarding hardened.** Live at github.com/leeroywking/ultima4-python (public).
 Fresh-clone onboarding is fixed: root `README.md` (clone→play quickstart), portable `.mcp.json`
 (`${CLAUDE_PROJECT_DIR:-.}`), stdio-clean MCP (no pygame banner leak). New watch/headless surfaces:

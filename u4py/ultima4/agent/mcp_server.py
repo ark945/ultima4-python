@@ -113,6 +113,24 @@ def legal_actions() -> List[str]:
     return _env.legal_actions()
 
 
+def wait(seconds: float) -> Dict[str, Any]:
+    """Let `seconds` of real game-time pass on the moon clock, then return the observation.
+
+    The moons run on a real-time clock, independent of your moves — `wait` is how you let that
+    clock advance without moving (e.g. to wait for a moongate to cycle into reach). `observe()`
+    reports the current phases and any open gate under `moons`."""
+    return _apply(lambda: _env.wait(seconds), label=f"wait {seconds}s")
+
+
+def wait_until(condition: str) -> Dict[str, Any]:
+    """Advance the moon clock until a condition holds, then return the observation.
+
+    Conditions: 'moongate' (an open gate is on/adjacent to you), 'moons_dark' (both moons new —
+    for harvesting mandrake/nightshade), 'trammel N', or 'felucca N'. The observation gains
+    `wait_reason` and `waited_seconds`."""
+    return _apply(lambda: _env.wait_until(condition), label=f"wait_until {condition}")
+
+
 def play(actions: List[str]) -> Dict[str, Any]:
     """Apply several actions in order; return the observation after the LAST one.
 
@@ -177,6 +195,8 @@ def build_server():
     mcp.tool()(act)
     mcp.tool()(legal_actions)
     mcp.tool()(play)
+    mcp.tool()(wait)
+    mcp.tool()(wait_until)
     mcp.tool()(viewer_status)
     mcp.tool()(list_demos)
     mcp.tool()(run_demo)

@@ -38,6 +38,15 @@ def _fmt(obs: dict) -> str:
     if obs["visible"]:
         out.append("visible: " + ", ".join(f"{v['tile']}@({v['dx']:+d},{v['dy']:+d})"
                                             for v in obs["visible"]))
+    mo = obs.get("moons")
+    if mo:
+        line = f"moons: trammel={mo['trammel']} felucca={mo['felucca']}"
+        g = mo.get("gate")
+        if g:
+            dest = g["destination"]
+            dest = "abyss" if dest == "abyss" else f"({dest['x']},{dest['y']})"
+            line += f"  gate@({g['x']},{g['y']})->{dest}" + ("  ADJACENT" if g["adjacent"] else "")
+        out.append(line)
     if obs["interaction"]["active"]:
         out.append(f"interaction: {obs['interaction']['prompt']}")
     if obs["messages"]:

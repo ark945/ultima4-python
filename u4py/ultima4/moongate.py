@@ -25,6 +25,12 @@ PHASES = 8
 # the smallest defensible inference: at our ~18.2 Hz overworld redraw it makes a Trammel-phase step
 # ~ every 20s (a full 8-phase cycle ~ 3 min), independent of how far the party walks.
 MOON_DIV = 6                           # stand-in for D_1668 reset (speed_info/2)
+MOON_HZ = 18.2                         # the DOS int-0x1C timer rate: real-time ticks/second
+
+# Cascade period in ticks: a Trammel phase is 16 counter-bumps × (MOON_DIV × 4) ticks, and a full
+# 8-phase Trammel cycle is 8 of those. Used to bound catch-up after a long idle (phase is cyclic).
+TRAMMEL_PHASE_TICKS = 16 * MOON_DIV * 4        # 384 ticks ≈ 21 s at MOON_HZ  (matches the original)
+FULL_CYCLE_TICKS = 8 * TRAMMEL_PHASE_TICKS     # 3072 ticks ≈ 2.8 min
 
 
 def tick_moons(game) -> None:
@@ -61,6 +67,31 @@ def _place_gate(game) -> None:
     tx, ty = MOONGATE_X[game.party.trammel], MOONGATE_Y[game.party.trammel]
     game._moongate = (tx, ty, game.world.tile_at(tx, ty))
     game.world.set_tile(tx, ty, GATE_OPEN)
+
+
+def open_gate(game):
+    """(x, y) of the currently-open moongate on the overworld, or None."""
+    if game._moongate is None:
+        return None
+    gx, gy, _ = game._moongate
+    return (gx, gy)
+
+
+def gate_destination(game):
+    """Where stepping through the open gate sends the avatar — (x, y) at the Felucca-phase
+    location, or the string "abyss" when both moons are full (C: U4_MAP.C C_2A91)."""
+    p = game.party
+    if p.trammel == 4 and p.felucca == 4:
+        return "abyss"
+    return (MOONGATE_X[p.felucca], MOONGATE_Y[p.felucca])
+
+
+def gate_adjacent(game) -> bool:
+    """True when the open gate is on or next to the avatar (steppable within one move)."""
+    g = open_gate(game)
+    if g is None:
+        return False
+    return abs(g[0] - game.party.x) <= 1 and abs(g[1] - game.party.y) <= 1
 
 
 def step_through(game) -> None:

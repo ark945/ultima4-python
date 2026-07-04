@@ -45,6 +45,9 @@ class UltimaEnv:
         self.game.rng.seed(seed)
         self._cursor = 0
         self.last_error: Optional[str] = None
+        # Whether observe/act advance the real-time moon clock. True for headless (the env is the
+        # only driver); a LiveWindow sets it False because its render loop drives the clock instead.
+        self.drive_clock = True
 
     # --- lifecycle -----------------------------------------------------------
     def reset(self, seed: Optional[int] = None) -> Dict[str, Any]:
@@ -75,8 +78,25 @@ class UltimaEnv:
             out.append({"tile": tile_name(tile), "dx": col - radius, "dy": row - radius})
         return out
 
+    def _moons(self) -> Dict[str, Any]:
+        """Moon phases + the open moongate (its position + where it sends you), for planning."""
+        from . import moongate
+        g, p = self.game, self.game.party
+        info: Dict[str, Any] = {"trammel": p.trammel, "felucca": p.felucca, "gate": None}
+        gate = moongate.open_gate(g) if g.mode == MOD_OUTDOORS else None
+        if gate is not None:
+            dest = moongate.gate_destination(g)
+            info["gate"] = {
+                "x": gate[0], "y": gate[1],
+                "destination": "abyss" if dest == "abyss" else {"x": dest[0], "y": dest[1]},
+                "adjacent": moongate.gate_adjacent(g),
+            }
+        return info
+
     def observe(self, radius: int = 4) -> Dict[str, Any]:
         from .agent.rpc import GameRPC
+        if self.drive_clock:
+            self.game.catch_up_moons()               # real-time moons advance to 'now' (headless)
         g, p = self.game, self.game.party
         snap = GameRPC(g).snapshot()
         new_msgs = [m for m in g.messages[self._cursor:] if m != ""]
@@ -98,6 +118,7 @@ class UltimaEnv:
             "gold": snap["gold"], "food": snap["food"],
             "inventory": snap["inventory"], "items": snap["items"],
             "visible": self._visible(radius),
+            "moons": self._moons(),
             "messages": new_msgs,
             "interaction": {"active": g.active is not None,
                             "prompt": getattr(g.active, "prompt", None) if g.active else None},
@@ -119,7 +140,11 @@ class UltimaEnv:
             return ["move N (advance)", "move S (retreat)", "move E (turn right)",
                     "move W (turn left)", "key K", "key D", "key X", "key C", "key Z"]
         moves = ["move N", "move S", "move E", "move W", "pass"]
-        return moves + [f"key {k}" for k in _COMMANDS]   # full command set outdoors / in towns
+        # Time primitives: the moons run on a real-time clock, so `wait` lets it advance without
+        # moving (e.g. to catch a moongate). Only meaningful on the overworld.
+        waits = (["wait <seconds>", "wait until moongate", "wait until moons_dark"]
+                 if g.mode == MOD_OUTDOORS else [])
+        return moves + waits + [f"key {k}" for k in _COMMANDS]   # full command set outdoors / in towns
 
     # --- action --------------------------------------------------------------
     def act(self, action: str) -> Dict[str, Any]:
@@ -127,6 +152,16 @@ class UltimaEnv:
         self.last_error = None
         verb, _, rest = action.strip().partition(" ")
         verb = verb.lower()
+        # `wait` is a time primitive, not a move: "wait 20" (seconds) or "wait until <cond>".
+        if verb == "wait":
+            arg = rest.strip()
+            if arg.lower().startswith("until"):
+                return self.wait_until(arg[len("until"):].strip())
+            try:
+                return self.wait(float(arg))
+            except ValueError:
+                self.last_error = f"wait needs seconds or 'until <cond>', got {arg!r}"
+                return self.observe()
         try:
             if verb == "move":
                 d = rest.strip().upper()[:1]
@@ -138,13 +173,75 @@ class UltimaEnv:
                     self.last_error = "no active interaction to 'say' into"
                 else:
                     self.game.feed(rest)
-            elif verb in ("pass", "wait"):
+            elif verb == "pass":
                 self.game.handle("SPACE")
             else:
                 self.last_error = f"unknown action {action!r}"
         except (KeyError, IndexError):
             self.last_error = f"malformed action {action!r}"
         return self.observe()
+
+    # --- time primitives (the moons run on a real-time clock; moves don't touch it) ----------
+    def wait(self, seconds: float) -> Dict[str, Any]:
+        """Let `seconds` of real game-time pass on the moon clock, then observe. Moves are
+        unaffected — this is how a turn-based agent lets the real-time moons advance (e.g. to
+        wait for a moongate to cycle into reach)."""
+        self.last_error = None
+        try:
+            secs = max(0.0, float(seconds))
+        except (TypeError, ValueError):
+            self.last_error = f"wait: seconds must be a number, got {seconds!r}"
+            return self.observe()
+        self.game.catch_up_moons()                       # fold in any elapsed wall time first
+        self.game.advance_moon_seconds(secs)
+        return self.observe()
+
+    def wait_until(self, condition: str, max_seconds: float = 600.0) -> Dict[str, Any]:
+        """Advance the moon clock until `condition` holds (or `max_seconds` of game-time elapse),
+        then observe. Conditions: 'moongate' (open gate on/adjacent to the avatar), 'moons_dark'
+        (both moons new), 'trammel N', 'felucca N'. The observation gains `wait_reason` and
+        `waited_seconds`."""
+        self.last_error = None
+        from . import moongate
+        g, p = self.game, self.game.party
+        cond = condition.strip().lower()
+
+        def holds():
+            if cond == "moongate":
+                return moongate.gate_adjacent(g)
+            if cond == "moons_dark":
+                return (p.trammel | p.felucca) == 0
+            if cond.startswith("trammel"):
+                return p.trammel == int(cond.split()[1])
+            if cond.startswith("felucca"):
+                return p.felucca == int(cond.split()[1])
+            return None
+
+        self.game.catch_up_moons()
+        try:
+            if holds() is None:
+                self.last_error = f"unknown wait_until condition {condition!r}"
+                return self.observe()
+        except (IndexError, ValueError):
+            self.last_error = f"wait_until: bad condition {condition!r} (want 'trammel N'/'felucca N')"
+            return self.observe()
+        if g.mode != MOD_OUTDOORS:
+            obs = self.observe()
+            obs["wait_reason"] = "not on the overworld (the moons only run outdoors)"
+            obs["waited_seconds"] = 0.0
+            return obs
+
+        waited, reason = 0.0, "condition met"
+        while not holds():
+            if waited >= max_seconds:
+                reason = f"timeout after {int(max_seconds)}s of game-time"
+                break
+            self.game.advance_moon_seconds(0.25)
+            waited += 0.25
+        obs = self.observe()
+        obs["wait_reason"] = reason
+        obs["waited_seconds"] = round(waited, 2)
+        return obs
 
     def play(self, actions: List[str]) -> List[Dict[str, Any]]:
         """Apply a sequence of actions, returning the observation after each (for replay)."""

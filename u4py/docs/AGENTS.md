@@ -76,7 +76,9 @@ Every action is a short string:
 | `move N` / `move S` / `move E` / `move W` | Compass movement (N = up/north). |
 | `key <LETTER>` | A command key: one of `A B C D E F G H I J K L M O P Q R S T U W X Z`. Friendly names below. |
 | `say <text>` | Free text into an **active** Talk/shop interaction (e.g. `say health`, `say bye`). |
-| `pass` | Wait one turn (also `wait`). |
+| `pass` | Consume one turn (SPACE). |
+| `wait <seconds>` | Let real game-time pass on the **moon clock** without moving (e.g. `wait 20`). See "Time & the moons". |
+| `wait until <cond>` | Advance the moon clock until a condition holds: `moongate`, `moons_dark`, `trammel N`, `felucca N`. |
 
 The command letters (`key X`) map to the original Ultima IV command set:
 
@@ -122,6 +124,7 @@ Every `observe()`/`act()` returns a dict with these keys:
 | `inventory` | dict | `torches, gems, keys, sextants, reagents{…8 reagents}`. |
 | `items` | list | Quest items held (runes, stones, the three-part key, etc.). |
 | `visible` | list | NPCs/monsters in view: `{tile, dx, dy}` offsets from the party. |
+| `moons` | dict | `{trammel, felucca, gate}` — the two moon phases (0–7) and, when a gate is open, `gate:{x, y, destination:{x,y}\|"abyss", adjacent}`. See "Time & the moons". |
 | `messages` | list[str] | Game text emitted **since the last observation** (deltas, not the whole log). |
 | `interaction` | `{active, prompt}` | Whether a Talk/shop dialog owns input, and its prompt. |
 | `won` | bool | True once the Avatar completes the quest. |
@@ -191,6 +194,31 @@ To capture a full, untrimmed observation at any time, run `ultima4-env-info` or
 
 ---
 
+### Time & the moons (moongates)
+
+The two moons, **Trammel** and **Felucca**, cycle through 8 phases on a **real-time clock** (the
+DOS int-`0x1C` timer, ~18.2 Hz) — **independent of your moves**, exactly as in the original. Moving
+never advances them; time does. This drives two mechanics:
+
+- **Moongates.** An open gate sits at the Trammel-phase location (one of 8 fixed spots); stepping
+  onto it teleports you to the Felucca-phase location (or toward the Abyss when both moons are full).
+  `observe()["moons"]["gate"]` gives the open gate's `{x, y, destination, adjacent}`.
+- **Mandrake & nightshade.** The two rarest reagents can only be gathered by `key S` (Search) at
+  their spots when **both moons are new** (`moons_dark`).
+
+Because you play turn-by-turn, use the **time primitives** to let the real-time clock advance
+without moving:
+
+- `wait <seconds>` (tool `wait(seconds)`) — let N seconds of game-time pass; the moons advance at
+  the authentic rate (~20 s per Trammel phase). Deterministic and replayable.
+- `wait until <cond>` (tool `wait_until(condition)`) — advance until `moongate` (an open gate is
+  on/adjacent to you), `moons_dark`, `trammel N`, or `felucca N`; returns `wait_reason` +
+  `waited_seconds`. Typical moongate trip: walk to a gate spot → `wait until trammel <that spot>`
+  (or `wait until moongate`) → step onto the gate.
+
+In a **windowed** session the moons also advance with real wall-time as you watch; headless advances
+the identical clock lazily on each observe/act plus your explicit `wait`s — same mechanic either way.
+
 ## How an external agent connects
 
 There are three ways to plug an agent into the game; they all sit on the same `UltimaEnv`.
@@ -231,7 +259,7 @@ repo and it starts playing**:
 2. The tools appear as `mcp__ultima4__*`. The agent plays the loop:
    `new_game(seed)` → `observe()` → pick from the returned `legal_actions` → `act("move N" | "key T"
    | "say health" | "pass")` → repeat. Tools: `new_game`, `observe`, `act`, `legal_actions`, `play`,
-   `viewer_status`, `list_demos`, `run_demo`.
+   `wait`, `wait_until`, `viewer_status`, `list_demos`, `run_demo`.
 
 If the agent runs from a **different folder** (not this repo as its project), register the server at
 user scope so it's visible everywhere — one command:
