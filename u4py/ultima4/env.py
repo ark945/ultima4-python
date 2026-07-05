@@ -98,14 +98,63 @@ class UltimaEnv:
             chars[len(chars) // 2][len(chars[0]) // 2] = "@"
         return ["".join(r) for r in chars]
 
+    def _recruitable(self, loc: int) -> bool:
+        """Can the town's companion (the tlkidx==1 NPC) ever join? — the permanent class gate:
+        a companion whose class == the Avatar's own class never joins (C: dialogue.py `_join`).
+        (Karma/HP are situational; the reference table in AGENTS.md documents them.)"""
+        vi = loc - 5
+        if not (0 <= vi <= 7):
+            return False
+        avatar_class = ord((self.game.party.chara[0].char_class or "\x00")[:1])
+        return vi != avatar_class
+
     def _visible(self, radius: int = 4) -> List[Dict[str, Any]]:
         g = self.game
         if g.mode == MOD_COMBAT:
             return []                                # combatants live in the `combat` block (one frame)
+        if g.mode == MOD_BUILDING and g.location is not None:
+            cx, cy = g.party.x, g.party.y
+            try:
+                talk = g._talk_data()                # the town's dialogue -> names by tlkidx
+            except Exception:
+                talk = None
+            out = []
+            for n in g.location.npcs:
+                dx, dy = n.x - cx, n.y - cy
+                if not (-radius <= dx <= radius and -radius <= dy <= radius):
+                    continue
+                entry: Dict[str, Any] = {"tile": tile_name(n.tile), "dx": dx, "dy": dy}
+                d = talk.for_npc(n.tlkidx) if (talk and n.tlkidx) else None
+                if d and d.name:
+                    entry["name"] = d.name
+                if n.tlkidx == 1:                    # the town's recruitable companion
+                    entry["recruitable"] = self._recruitable(g.party.loc)
+                out.append(entry)
+            return out
         out = []
         for col, row, tile in (list(g.npc_sprites(radius)) + list(g.monster_sprites(radius))):
             out.append({"tile": tile_name(tile), "dx": col - radius, "dy": row - radius})
         return out
+
+    def find_npc(self, name: str) -> Dict[str, Any]:
+        """Locate an NPC by name in the current town (scans the WHOLE map, not just the view) so an
+        agent can find a companion without reading .ULT/dialogue files. Returns {found, x, y, dx, dy,
+        tlkidx, recruitable} or {found: False, reason}."""
+        g = self.game
+        if g.mode != MOD_BUILDING or g.location is None:
+            return {"found": False, "reason": "not in a town"}
+        try:
+            talk = g._talk_data()
+        except Exception:
+            talk = None
+        want = name.strip().lower()
+        for n in g.location.npcs:
+            d = talk.for_npc(n.tlkidx) if (talk and n.tlkidx) else None
+            if d and d.name and d.name.lower() == want:
+                return {"found": True, "name": d.name, "x": n.x, "y": n.y,
+                        "dx": n.x - g.party.x, "dy": n.y - g.party.y, "tlkidx": n.tlkidx,
+                        "recruitable": self._recruitable(g.party.loc) if n.tlkidx == 1 else None}
+        return {"found": False, "reason": f"no NPC named {name!r} in {g.location.name}"}
 
     def _moons(self) -> Dict[str, Any]:
         """Moon phases + the open moongate (its position + where it sends you), for planning."""

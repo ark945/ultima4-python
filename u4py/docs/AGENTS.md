@@ -125,7 +125,7 @@ Every `observe()`/`act()` returns a dict with these keys:
 | `food` | int | Party food (drains over time — see turn-tick upkeep). |
 | `inventory` | dict | `torches, gems, keys, sextants, reagents{…8 reagents}`. |
 | `items` | list | Quest items held (runes, stones, the three-part key, etc.). |
-| `visible` | list | NPCs/monsters in view: `{tile, dx, dy}` offsets from the party. |
+| `visible` | list | NPCs/monsters in view: `{tile, dx, dy}` offsets from the party. In a town, NPCs also carry `name`, and the recruitable companion (the `tlkidx==1` NPC) carries `recruitable` (false if its class == the Avatar's, since that companion can never join). Use `find_npc(name)` to locate one anywhere in the town. |
 | `moons` | dict | `{trammel, felucca, gate}` — the two moon phases (0–7) and, when a gate is open, `gate:{x, y, destination:{x,y}\|"abyss", adjacent}`. See "Time & the moons". |
 | `combat` | dict/absent | Only in combat, and the **single authoritative frame**: `active:{member, pos, reach, can_attack:[dirs], nearest:{dir, step, dist, in_range, tile}}` + `monsters:[{tile, pos, dx, dy, dist, direction, in_range}]`, all from the active member. If `can_attack` is non-empty, `attack` (nearest) / `attack <dir>`; else `move` `active.nearest.step`. (In combat, `visible` is empty and — in `min` — `view_ascii`/`moons` are dropped.) |
 | `messages` | list[str] | Game text emitted **since the last observation** (deltas, not the whole log). |
@@ -318,7 +318,7 @@ repo and it starts playing**:
 2. The tools appear as `mcp__ultima4__*`. The agent plays the loop:
    `new_game(seed)` → `observe()` → pick from the returned `legal_actions` → `act("move N" | "key T"
    | "say health" | "pass")` → repeat. Tools: `new_game`, `observe`, `act`, `legal_actions`, `play`,
-   `travel_to`, `wait`, `wait_until`, `viewer_status`, `list_demos`, `run_demo`.
+   `travel_to`, `wait`, `wait_until`, `find_npc`, `viewer_status`, `list_demos`, `run_demo`.
 
 If the agent runs from a **different folder** (not this repo as its project), register the server at
 user scope so it's visible everywhere — one command:

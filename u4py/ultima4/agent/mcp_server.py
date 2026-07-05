@@ -131,6 +131,15 @@ def legal_actions() -> List[str]:
     return _env.legal_actions()
 
 
+def find_npc(name: str) -> Dict[str, Any]:
+    """Locate an NPC by name in the current town — scans the whole map, not just the view — so you
+    can find a companion without wandering and talking to everyone. Returns {found, x, y, dx, dy,
+    tlkidx, recruitable} or {found: False, reason}. The town's companion is the tlkidx==1 NPC;
+    `recruitable` is false when its class == the Avatar's own class (that companion can never join).
+    Pair with the companion/town table in docs/AGENTS.md."""
+    return _env.find_npc(name)
+
+
 def set_verbosity(mode: str = "min") -> Dict[str, Any]:
     """Control how much state each observation carries — set 'min' up front to save tokens on long
     playthroughs. In 'min', an observation OMITS the party / gold / food / inventory / items /
@@ -239,6 +248,7 @@ def build_server():
     mcp.tool()(observe)
     mcp.tool()(act)
     mcp.tool()(legal_actions)
+    mcp.tool()(find_npc)
     mcp.tool()(set_verbosity)
     mcp.tool()(play)
     mcp.tool()(wait)

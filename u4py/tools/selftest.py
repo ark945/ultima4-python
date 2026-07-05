@@ -592,6 +592,24 @@ def _():
     assert env.act(f"go {here['x']} {here['y']}").get("travel_reason") == "arrived"
 
 
+@check("agent NPCs: visible names + find_npc locate a companion, with the class join-gate (#12)")
+def _():
+    from ultima4.env import UltimaEnv
+    # Yew = Jaana (Druid, class 3); a fresh Avatar is a Fighter (class 2)
+    g = Game(); g.rng.seed(1); g._enter_location(8, entry=(1, 15), kind="towne")
+    env = UltimaEnv(game=g)
+    r = env.find_npc("Jaana")
+    assert r["found"] and r["tlkidx"] == 1 and r["recruitable"] is True   # druid != fighter -> joinable
+    assert "x" in r and "y" in r                                          # scanned the whole town
+    assert env.find_npc("Nobody")["found"] is False
+    # visible NPCs carry names; the companion carries `recruitable`
+    vis = env.observe()["visible"]
+    assert any("name" in v for v in vis)
+    # the join gotcha: Geoffrey in Jhelom shares the Fighter Avatar's class -> can never join
+    g2 = Game(); g2.rng.seed(1); g2._enter_location(7, entry=(1, 15), kind="towne")   # Jhelom (class 2)
+    assert UltimaEnv(game=g2).find_npc("Geoffrey")["recruitable"] is False
+
+
 @check("agent tokens: verbosity='min' omits unchanged blocks; re-sends on change (issue #7)")
 def _():
     from ultima4.env import UltimaEnv
