@@ -43,6 +43,10 @@ This repo ships a portable `.mcp.json`, so opening the repo in Claude Code offer
 server (tools `mcp__ultima4__*`). Every `observe()` / `act()` renders **in the conversation**, so
 the human follows every turn. Loop: `new_game(seed)` → `observe()` → pick from `legal_actions` →
 `act(...)` → repeat, reading `view_ascii` / `visible` / `standing_on` / `messages` to decide.
+**Prefer the batch tools over spamming single steps:** `travel_to(x,y)` walks a whole path in one
+call and stops on anything interesting (combat, dialog, arrival); `wait(seconds)` / `wait_until(...)`
+advance the real-time moons (for a moongate) instead of repeating `pass`. `observe()["moons"]` shows
+the phases + open gate for planning.
 
 The shipped `.mcp.json` launches the server with `--window`, so **a real game window also opens
 automatically whenever the machine has a display** (it silently stays headless if not) — the human
@@ -80,6 +84,7 @@ nothing). Only play a real session this way if the human explicitly asks for an 
 **Action grammar** (same everywhere): `"move N|S|E|W"`, `"key <LETTER>"` (T=Talk, E=Enter, C=Cast,
 Z=Ztats, K=Klimb, D=Descend, X=eXit…), `"say <text>"` (into an active Talk/shop), `"pass"`, and the
 time primitives `"wait <seconds>"` / `"wait until moongate|moons_dark|trammel N|felucca N"` (the moons
-run on a real-time clock independent of moves; `wait` lets it advance — e.g. to catch a moongate). The
+run on a real-time clock independent of moves; `wait` lets it advance — e.g. to catch a moongate), and
+`"go <x> <y>"` (travel a whole path in one call, stopping on combat/dialog/arrival). The
 full observe/act contract is in `u4py/docs/AGENTS.md`. Goal of a playthrough is up to the human;
 the win condition is the Abyss/Codex (`observation["won"]`).

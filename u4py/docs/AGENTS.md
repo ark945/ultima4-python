@@ -79,6 +79,7 @@ Every action is a short string:
 | `pass` | Consume one turn (SPACE). |
 | `wait <seconds>` | Let real game-time pass on the **moon clock** without moving (e.g. `wait 20`). See "Time & the moons". |
 | `wait until <cond>` | Advance the moon clock until a condition holds: `moongate`, `moons_dark`, `trammel N`, `felucca N`. |
+| `go <x> <y>` (or `travel <x> <y>`) | **Walk a whole path in one call** to tile (x, y); stops on arrival or the first interesting event. See "Moving efficiently". |
 
 The command letters (`key X`) map to the original Ultima IV command set:
 
@@ -194,6 +195,20 @@ To capture a full, untrimmed observation at any time, run `ultima4-env-info` or
 
 ---
 
+### Moving efficiently — don't spend a round-trip per step
+
+Crossing open terrain one `move` at a time is slow (a full observe round-trip per tile). Prefer the
+batch primitives:
+
+- **`go <x> <y>`** / tool `travel_to(x, y)` — pathfinds to (x, y) (BFS, honouring your transport:
+  foot/horse/ship/balloon) and walks the **whole path in one call**, taking real turns. It **stops
+  early** the moment anything interesting happens and returns the observation with `travel_reason`
+  (`arrived`, `interrupted: now combat`, `interaction opened`, `took damage`, `blocked`, `no_path`,
+  `max_steps`) and `steps_taken`. So you never miss a fight or a conversation — you just skip the
+  boring straight-line walking. If the target tile isn't walkable it stops adjacent. Overworld and
+  towns only (dungeons use their own advance/turn movement).
+- Use single `move N/S/E/W` for fine positioning (lining up on a door, a gate tile, an NPC).
+
 ### Time & the moons (moongates)
 
 The two moons, **Trammel** and **Felucca**, cycle through 8 phases on a **real-time clock** (the
@@ -259,7 +274,7 @@ repo and it starts playing**:
 2. The tools appear as `mcp__ultima4__*`. The agent plays the loop:
    `new_game(seed)` → `observe()` → pick from the returned `legal_actions` → `act("move N" | "key T"
    | "say health" | "pass")` → repeat. Tools: `new_game`, `observe`, `act`, `legal_actions`, `play`,
-   `wait`, `wait_until`, `viewer_status`, `list_demos`, `run_demo`.
+   `travel_to`, `wait`, `wait_until`, `viewer_status`, `list_demos`, `run_demo`.
 
 If the agent runs from a **different folder** (not this repo as its project), register the server at
 user scope so it's visible everywhere — one command:

@@ -14,7 +14,9 @@ every render frame (windowed), so both modes are mechanically identical. `observ
 agent advance the real-time clock without moving: `wait <seconds>` and `wait until moongate|moons_dark|
 trammel N|felucca N` (MCP tools `wait`/`wait_until`; also in `agent-play`). Moves still never touch the
 moons (`end_turn` untouched). `game.moon_wallclock=False` freezes wall-time for deterministic tests.
-`./run test` = 86/86.
+Plus **`travel_to(x,y)`** / `"go x y"` (issue #5 traversal half) — BFS-pathfinds across the overworld/
+town in one call, stops on arrival/combat/dialog/damage/block with `travel_reason`+`steps_taken`.
+Batch tools are steered in CLAUDE.md/AGENTS.md + the MCP server `instructions`. `./run test` = 87/87.
 
 **✅ SHIPPED PUBLIC + onboarding hardened.** Live at github.com/leeroywking/ultima4-python (public).
 Fresh-clone onboarding is fixed: root `README.md` (clone→play quickstart), portable `.mcp.json`

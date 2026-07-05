@@ -131,6 +131,15 @@ def wait_until(condition: str) -> Dict[str, Any]:
     return _apply(lambda: _env.wait_until(condition), label=f"wait_until {condition}")
 
 
+def travel_to(x: int, y: int, max_steps: int = 100) -> Dict[str, Any]:
+    """Walk toward tile (x, y) over many turns in ONE call — use this instead of dozens of single
+    `move` calls when crossing open terrain. It pathfinds around obstacles (respecting your
+    transport) and takes real turns, but STOPS early and returns the observation the moment
+    anything interesting happens: arrival, combat, a dialog opening, taking damage, a block, or
+    `max_steps`. The result carries `travel_reason` and `steps_taken`. Overworld and towns only."""
+    return _apply(lambda: _env.travel_to(x, y, max_steps), label=f"travel_to({x},{y})")
+
+
 def play(actions: List[str]) -> Dict[str, Any]:
     """Apply several actions in order; return the observation after the LAST one.
 
@@ -185,7 +194,12 @@ def build_server():
             "letter like T=talk, E=enter, C=cast, Z=ztats, K=klimb, D=descend, A=attack), "
             "'say <text>' (into an active Talk/shop interaction), or 'pass' (wait a turn). "
             "ALWAYS consult observe()['legal_actions'] first — it lists exactly which actions "
-            "are valid right now. new_game(seed) restarts deterministically."
+            "are valid right now. new_game(seed) restarts deterministically. "
+            "Prefer the batch tools over spamming single steps: to cross open terrain call "
+            "travel_to(x, y) (it walks the whole path in one call and stops on anything "
+            "interesting); to let the real-time moons advance (e.g. for a moongate) call "
+            "wait(seconds) or wait_until('moongate'/'moons_dark'/'trammel N'/'felucca N') instead "
+            "of repeating pass. Check observe()['moons'] to plan moongate travel."
         ),
     )
 
@@ -197,6 +211,7 @@ def build_server():
     mcp.tool()(play)
     mcp.tool()(wait)
     mcp.tool()(wait_until)
+    mcp.tool()(travel_to)
     mcp.tool()(viewer_status)
     mcp.tool()(list_demos)
     mcp.tool()(run_demo)

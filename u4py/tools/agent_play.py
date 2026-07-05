@@ -52,6 +52,10 @@ def _fmt(obs: dict) -> str:
     if obs["messages"]:
         out.append("messages:")
         out.extend("   " + m for m in obs["messages"])
+    if "travel_reason" in obs:
+        out.append(f"travel: {obs['travel_reason']} ({obs.get('steps_taken', 0)} steps)")
+    if "wait_reason" in obs:
+        out.append(f"waited: {obs['wait_reason']} ({obs.get('waited_seconds', 0)}s)")
     if obs.get("error"):
         out.append(f"!! {obs['error']}")
     out.append("legal: " + " | ".join(obs["legal_actions"]))

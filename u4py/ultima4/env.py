@@ -19,10 +19,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from . import transport
 from .constants import (MODE_NAMES, MOD_OUTDOORS, MOD_BUILDING, MOD_DUNGEON, MOD_COMBAT)
 from .demo import _glyph
 from .game import Game
-from .tiles import tile_name
+from .tiles import tile_name, is_walkable, LB_CASTLE_ENTRANCE
+
+# Orthogonal steps and the arrow key each maps to (N=up).
+_STEP_DIRS = (("UP", 0, -1), ("DOWN", 0, 1), ("RIGHT", 1, 0), ("LEFT", -1, 0))
 
 SCHEMA_VERSION = 1
 
@@ -140,11 +144,14 @@ class UltimaEnv:
             return ["move N (advance)", "move S (retreat)", "move E (turn right)",
                     "move W (turn left)", "key K", "key D", "key X", "key C", "key Z"]
         moves = ["move N", "move S", "move E", "move W", "pass"]
+        # `go x y` walks a whole path in one call (overworld + towns) — far cheaper than one
+        # observe round-trip per step across open terrain.
+        travel = ["go <x> <y>"] if g.mode in (MOD_OUTDOORS, MOD_BUILDING) else []
         # Time primitives: the moons run on a real-time clock, so `wait` lets it advance without
         # moving (e.g. to catch a moongate). Only meaningful on the overworld.
         waits = (["wait <seconds>", "wait until moongate", "wait until moons_dark"]
                  if g.mode == MOD_OUTDOORS else [])
-        return moves + waits + [f"key {k}" for k in _COMMANDS]   # full command set outdoors / in towns
+        return moves + travel + waits + [f"key {k}" for k in _COMMANDS]  # full command set outdoors / in towns
 
     # --- action --------------------------------------------------------------
     def act(self, action: str) -> Dict[str, Any]:
@@ -161,6 +168,14 @@ class UltimaEnv:
                 return self.wait(float(arg))
             except ValueError:
                 self.last_error = f"wait needs seconds or 'until <cond>', got {arg!r}"
+                return self.observe()
+        # `go`/`travel x y` walks a whole path in one call (stops on anything interesting).
+        if verb in ("go", "travel"):
+            parts = rest.split()
+            try:
+                return self.travel_to(int(parts[0]), int(parts[1]))
+            except (IndexError, ValueError):
+                self.last_error = f"{verb} needs 'x y' coordinates, got {rest!r}"
                 return self.observe()
         try:
             if verb == "move":
@@ -241,6 +256,132 @@ class UltimaEnv:
         obs = self.observe()
         obs["wait_reason"] = reason
         obs["waited_seconds"] = round(waited, 2)
+        return obs
+
+    # --- traversal (walk a path in ONE call, stopping on anything interesting) ---------------
+    def _walkable(self, x: int, y: int) -> bool:
+        """Can the party step onto (x, y) right now, given its transport (C: _move_overworld /
+        _move_building rules)?"""
+        g = self.game
+        if g.mode == MOD_OUTDOORS:
+            t = g.world.tile_at(x & 0xFF, y & 0xFF)
+            return t == LB_CASTLE_ENTRANCE or transport.can_move_onto(g.party.tile, t)
+        t = g.location.tile_at(x, y)               # town/castle interior
+        return t is not None and is_walkable(t) and g.location.npc_at(x, y) is None
+
+    def _bfs_path(self, tx: int, ty: int, max_nodes: int = 40000):
+        """Shortest 4-neighbour path (list of (x,y) after the start) from the party to (tx,ty),
+        honouring walkability for the current transport. If (tx,ty) itself isn't walkable, aim for
+        a tile adjacent to it. Returns None if unreachable within `max_nodes` explored."""
+        from collections import deque
+        g = self.game
+        outdoors = g.mode == MOD_OUTDOORS
+        wrap = (lambda v: v & 0xFF) if outdoors else (lambda v: v)
+        goal = (wrap(tx), wrap(ty))
+        goal_walkable = self._walkable(*goal)
+        start = (g.party.x, g.party.y)
+
+        def neighbours(p):
+            for _, dx, dy in _STEP_DIRS:
+                yield (wrap(p[0] + dx), wrap(p[1] + dy))
+
+        def is_goal(p):
+            return p == goal or (not goal_walkable and goal in set(neighbours(p)))
+
+        prev = {start: None}
+        q = deque([start])
+        nodes = 0
+        while q and nodes < max_nodes:
+            cur = q.popleft()
+            nodes += 1
+            if is_goal(cur):
+                path = []
+                while cur is not None and prev[cur] is not None:
+                    path.append(cur)
+                    cur = prev[cur]
+                path.reverse()
+                return path
+            for nb in neighbours(cur):
+                if nb not in prev and self._walkable(*nb):
+                    prev[nb] = cur
+                    q.append(nb)
+        return None
+
+    def _dir_key(self, a, b) -> str:
+        outdoors = self.game.mode == MOD_OUTDOORS
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        if outdoors:                                # normalise wrap-around to -1/0/+1
+            dx = ((dx + 128) & 0xFF) - 128
+            dy = ((dy + 128) & 0xFF) - 128
+        for key, sdx, sdy in _STEP_DIRS:
+            if (dx, dy) == (sdx, sdy):
+                return key
+        return "UP"                                 # unreachable; BFS only yields 4-neighbours
+
+    def travel_to(self, x: int, y: int, max_steps: int = 100) -> Dict[str, Any]:
+        """Walk toward (x, y) over multiple turns in ONE call, so an agent doesn't spend a round-trip
+        per step crossing open terrain. Paths around obstacles (BFS honouring the party's transport)
+        and takes real turns (food drains, monsters roam). STOPS early — returning the observation
+        plus `travel_reason` and `steps_taken` — on: arrival (or adjacent, if the target tile isn't
+        walkable), combat/entering a location, a dialog opening, taking damage, a genuine block, or
+        `max_steps`. Overworld and town only (not dungeons)."""
+        self.last_error = None
+        g = self.game
+        if g.mode not in (MOD_OUTDOORS, MOD_BUILDING):
+            obs = self.observe()
+            obs["travel_reason"] = "travel only works on the overworld or in a town"
+            obs["steps_taken"] = 0
+            return obs
+        base_mode = g.mode
+        wrap = (lambda v: v & 0xFF) if base_mode == MOD_OUTDOORS else (lambda v: v)
+        goal = (wrap(x), wrap(y))
+        path = self._bfs_path(x, y)                  # None = unreachable; [] = already there
+        if path is None:
+            obs = self.observe()
+            obs["travel_reason"] = "no_path"
+            obs["steps_taken"] = 0
+            return obs
+
+        hp0 = sum(c.hp for c in g.party.members)
+        steps, stuck, recomputed, reason = 0, 0, False, "arrived"
+        cur = (g.party.x, g.party.y)
+        i = 0
+        while i < len(path):
+            if steps >= max_steps:
+                reason = "max_steps"
+                break
+            before = (g.party.x, g.party.y)
+            g.handle(self._dir_key(cur, path[i]))
+            steps += 1
+            if g.mode != base_mode:                 # combat started / entered/left a map
+                reason = f"interrupted: now {MODE_NAMES.get(g.mode, '?')}"
+                break
+            if g.active is not None:                # a dialog/shop opened
+                reason = "interaction opened"
+                break
+            if sum(c.hp for c in g.party.members) < hp0:
+                reason = "took damage"
+                break
+            pos = (g.party.x, g.party.y)
+            if pos == before:                       # blocked or rough-terrain ate the move
+                stuck += 1
+                if stuck >= 3:
+                    if not recomputed:              # an NPC may have drifted onto the path — retry
+                        recomputed = True
+                        new = self._bfs_path(x, y)
+                        if new:
+                            path, i, cur, stuck = new, 0, pos, 0
+                            continue
+                    reason = "blocked"
+                    break
+                continue                            # retry the same step
+            stuck, cur, i = 0, pos, i + 1
+            if pos == goal:
+                reason = "arrived"
+                break
+        obs = self.observe()
+        obs["travel_reason"] = reason
+        obs["steps_taken"] = steps
         return obs
 
     def play(self, actions: List[str]) -> List[Dict[str, Any]]:

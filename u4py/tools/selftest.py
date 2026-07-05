@@ -509,6 +509,34 @@ def _():
     assert "unknown wait_until" in (env.wait_until("banana").get("error") or "")   # bad cond reported
 
 
+@check("agent travel_to: pathfinds across a map in one call, arriving or stopping on interrupt")
+def _():
+    from ultima4.env import UltimaEnv
+    g = Game(); g.rng.seed(1)
+    g._enter_location(1, entry=(15, 30), kind="castle")   # a town-like interior (no random combat)
+    env = UltimaEnv(game=g)
+    here = env.observe()["position"]
+    # already there -> arrived in 0 steps
+    o0 = env.travel_to(here["x"], here["y"])
+    assert o0["travel_reason"] == "arrived" and o0["steps_taken"] == 0
+    # find a reachable interior tile a few steps off and walk the whole path in one call
+    target = None
+    for dx in range(-6, 7):
+        for dy in range(-6, 7):
+            tx, ty = here["x"] + dx, here["y"] + dy
+            if (dx, dy) != (0, 0) and env._walkable(tx, ty) and env._bfs_path(tx, ty):
+                target = (tx, ty)
+        if target:
+            break
+    o = env.travel_to(*target, max_steps=60)
+    assert o["travel_reason"] == "arrived" and (o["position"]["x"], o["position"]["y"]) == target
+    assert o["steps_taken"] >= 1, "travel took no steps"
+    # off-map / unreachable target -> no_path, no move
+    assert env.travel_to(999, 999)["travel_reason"] == "no_path"
+    # the action-string form works too
+    assert env.act(f"go {here['x']} {here['y']}").get("travel_reason") == "arrived"
+
+
 # --- transport --------------------------------------------------------------
 @check("transport: board/exit, and a ship sails water but not land")
 def _():
