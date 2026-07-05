@@ -912,6 +912,31 @@ def _():
     assert not g.monsters and g.combat is not None and g.mode == MOD_COMBAT
 
 
+@check("monsters: stranded/left-behind creatures are culled so encounters keep coming (issue #6)")
+def _():
+    from ultima4 import monsters
+    g = Game(); g.party.loc = 0; g.mode = MOD_OUTDOORS; g.rng.seed(3)
+    g.party.x, g.party.y = 100, 100
+    for dx in range(-9, 10):                        # a grass field so land monsters can spawn/close
+        for dy in range(-9, 10):
+            g.world.set_tile((100 + dx) & 0xFF, (100 + dy) & 0xFF, 0x04)
+    # a creature far off the active window is culled (frees its cap slot)
+    g.monsters[:] = [monsters.Monster((100 + monsters.CULL_DIST + 3) & 0xFF, 100, 0x84)]
+    monsters._cull(g); assert g.monsters == [], "distant monster not culled"
+    # a wedged/unreachable creature (no progress for STUCK_LIMIT turns) is culled even if nearby
+    g.monsters[:] = [monsters.Monster(103, 100, 0x84, stuck=monsters.STUCK_LIMIT)]
+    monsters._cull(g); assert g.monsters == [], "stuck monster not culled"
+    # REGRESSION: start with the cap full of stranded sea creatures; encounters must still fire
+    g.monsters[:] = [monsters.Monster(103, (100 + i) & 0xFF, 0x84) for i in range(monsters.MAX_MONSTERS)]
+    enc = 0
+    for _ in range(400):
+        monsters.spawn_and_move(g)
+        if g.mode == MOD_COMBAT:                    # an encounter fired -> "win" and return outdoors
+            enc += 1
+            g.combat, g.mode = None, MOD_OUTDOORS
+    assert enc >= 10, f"overworld encounters dried up after a full cap ({enc} in 400 turns)"
+
+
 # --- v1 scaffold ------------------------------------------------------------
 @check("every v1 stub module imports and stubbed commands degrade without crashing")
 def _():
