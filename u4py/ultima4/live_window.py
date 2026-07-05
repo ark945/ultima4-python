@@ -88,8 +88,8 @@ class LiveWindow:
         # pygame setup MUST happen on the thread that will run() — but Assets needs a display
         # mode set first, and with SDL_VIDEODRIVER=dummy this is safe headlessly too.
         play.pygame.init()
-        self.W = play.VIEW * play.SCALE
-        self.H = play.VIEW * play.SCALE + play.PANEL_H
+        self.W = play.WINDOW_W
+        self.H = play.WINDOW_H
         self.screen = play.pygame.display.set_mode((self.W, self.H))
         play.pygame.display.set_caption("Ultima IV — watch the agent")
         self.assets = play.Assets(which)

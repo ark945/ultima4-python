@@ -166,6 +166,28 @@ def _():
         assert os.path.getsize(out) > 0, "smoke wrote an empty PNG"
 
 
+@check("gui: the party status column (C: dspl_Stats) renders the whole roster + food/gold")
+def _():
+    import os
+    os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+    os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
+    import play
+    from ultima4.savefile import load_template_party
+    assert play.WINDOW_W > play.VIEW * play.SCALE, "window not widened for the party column"
+    play.pygame.init()
+    screen = play.pygame.display.set_mode((play.WINDOW_W, play.WINDOW_H))
+    try:
+        A = play.Assets("ega")
+        g = Game(); g.party = load_template_party(); g.party.member_count = 6
+        for c in g.party.members:
+            c.hp, c.hp_max, c.status = 111, 150, "G"
+        g.party.chara[2].status = "P"
+        play.draw_stats_panel(screen, A, g)         # exercises the multi-member roster loop
+        play.draw_game(screen, A, g, 0)             # full frame incl. the panel, no crash
+    finally:
+        play.pygame.quit()
+
+
 @check("mcp --window: MCP act()/new_game apply on the render thread and are observed live")
 def _():
     import os, threading

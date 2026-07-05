@@ -33,6 +33,12 @@ AVATAR_TILE = 0x1F
 CHAR_PX = 8 * SCALE        # moon glyph display size (8x8 charset glyph, scaled)
 FONT_SCALE = 2             # in-game text: the original 8x8 CHARSET font, 2x for readability
 FONT_PX = 8 * FONT_SCALE   # 16px per glyph
+# The original screen is map-on-the-left + a status COLUMN on the right (C: U4_UTIL.C C_0CF7
+# dspl_Stats draws the party at char cols 24-38). We keep a bottom message panel too, so the
+# window is: [ map | party column ] over [ messages ].
+PANEL_W = 19 * FONT_PX     # room for "<n>-<name8>" + HP + status on one row
+WINDOW_W = VIEW * SCALE + PANEL_W
+WINDOW_H = VIEW * SCALE + PANEL_H
 
 # Arrow keys -> movement tokens; letter keys pass straight through as commands.
 ARROWS = {pygame.K_UP: "UP", pygame.K_DOWN: "DOWN", pygame.K_LEFT: "LEFT", pygame.K_RIGHT: "RIGHT"}
@@ -106,6 +112,27 @@ class Assets:
         self.moon_glyphs = load_moon_glyphs(which)
 
 
+def draw_stats_panel(screen, A: "Assets", game) -> None:
+    """The party status column on the right, mirroring the original (C: U4_UTIL.C C_0CF7
+    dspl_Stats): one row per member — `<n>-<name>` (name up to 8 chars), then the current HP (3
+    cols) and the status letter G/P/S/D; below the roster, food and — aboard ship the hull, else
+    gold. The original draws these at char cols 24 (name), 35 (HP), 38 (status), rows 1..8, and
+    row 10 for food/gold; we lay them out the same way in the right-hand panel."""
+    p = game.party
+    x0 = VIEW * SCALE + FONT_PX // 2                 # just right of the map viewport
+    def y(row):                                     # authentic char row -> pixel y
+        return 4 + row * FONT_PX
+    pygame.draw.line(screen, (60, 60, 60), (VIEW * SCALE, 0), (VIEW * SCALE, VIEW * SCALE))
+    for i, c in enumerate(p.members):               # members = chara[:member_count]
+        blit_text(screen, A.font_glyphs, f"{i + 1}-{(c.name or '')[:8]}", x0, y(i + 1))
+        blit_text(screen, A.font_glyphs, f"{c.hp:>3}{c.status}", x0 + 11 * FONT_PX, y(i + 1))
+    blit_text(screen, A.font_glyphs, f"F:{p.food // 100:04d}", x0, y(10))     # C_0CF7 food/100
+    if p.tile < 0x14:                               # aboard a ship (C: _tile < TIL_14) -> hull
+        blit_text(screen, A.font_glyphs, f"SHP:{p.ship:02d}", x0 + 8 * FONT_PX, y(10))
+    else:
+        blit_text(screen, A.font_glyphs, f"G:{p.gold:04d}", x0 + 8 * FONT_PX, y(10))
+
+
 def draw_game(screen, A: "Assets", game, phase: int = 0, banner: str = None,
               input_text: str = None) -> None:
     """Render one in-game frame (viewport + sprites + avatar + moons + message panel).
@@ -131,9 +158,10 @@ def draw_game(screen, A: "Assets", game, phase: int = 0, banner: str = None,
         cx = (VIEW * SCALE - 2 * CHAR_PX) // 2
         for k, ph in enumerate((game.party.trammel & 7, game.party.felucca & 7)):
             screen.blit(A.moon_glyphs[(ph - 1) & 7], (cx + k * CHAR_PX, 2))
+    draw_stats_panel(screen, A, game)               # party roster column on the right (C: dspl_Stats)
     y0 = VIEW * SCALE + 6
     blit_text(screen, A.font_glyphs, game.status_line(), 6, y0)
-    cols = (VIEW * SCALE - 12) // FONT_PX
+    cols = (WINDOW_W - 12) // FONT_PX
     lines = []
     for msg in game.messages:
         for seg in (msg.split("\n") if msg else [""]):
@@ -145,7 +173,7 @@ def draw_game(screen, A: "Assets", game, phase: int = 0, banner: str = None,
         blit_text(screen, A.font_glyphs, "> " + input_text + "_", 6,
                   VIEW * SCALE + PANEL_H - FONT_PX - 2)
     if banner:                                       # demo caption strip over the top of the map
-        bar = pygame.Surface((VIEW * SCALE, FONT_PX + 6)); bar.set_alpha(210); bar.fill((0, 0, 40))
+        bar = pygame.Surface((WINDOW_W, FONT_PX + 6)); bar.set_alpha(210); bar.fill((0, 0, 40))
         screen.blit(bar, (0, 0))
         blit_text(screen, A.font_glyphs, banner[:cols], 6, 3)
     pygame.display.flip()
@@ -295,7 +323,7 @@ def _place_for_testing(game) -> None:
 
 def main(which: str = "ega", town: str = None) -> None:
     pygame.init()
-    W, H = VIEW * SCALE, VIEW * SCALE + PANEL_H
+    W, H = WINDOW_W, WINDOW_H
     screen = pygame.display.set_mode((W, H))
     pygame.display.set_caption("Ultima IV (Python port)")
     clock = pygame.time.Clock()

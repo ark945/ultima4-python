@@ -30,7 +30,7 @@ def main(argv=None) -> int:
     which = "ega"
 
     play.pygame.init()
-    W, H = play.VIEW * play.SCALE, play.VIEW * play.SCALE + play.PANEL_H
+    W, H = play.WINDOW_W, play.WINDOW_H
     screen = play.pygame.display.set_mode((W, H))
     assets = play.Assets(which)
     game = Game()                                # fresh overworld boot (from data/party_start.json)
