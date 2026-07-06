@@ -1017,6 +1017,24 @@ def _():
     assert g.combat is None and g.mode == MOD_OUTDOORS
 
 
+@check("combat: two monsters adjacent in one turn -> one encounter, no stuck-in-combat (#15)")
+def _():
+    from ultima4 import combat, monsters
+    g = Game(); g.party.loc = 0; g.mode = MOD_OUTDOORS; g.rng.seed(1)
+    g.party.x, g.party.y = 100, 100
+    g.party.member_count = 1
+    c0 = g.party.chara[0]; c0.status, c0.hp, c0.hp_max = "G", 80, 80
+    g.monsters[:] = [monsters.Monster(101, 100, 0x94), monsters.Monster(100, 101, 0x94)]  # both adjacent
+    monsters._move(g)
+    assert g.mode == MOD_COMBAT and g.combat is not None            # exactly one encounter started
+    assert g._combat_return[0] == MOD_OUTDOORS                      # return mode NOT clobbered to COMBAT
+    assert len(g.monsters) == 1                                     # 2nd monster still waits on the overworld
+    combat.start_encounter(g, 0x94)                                # a chained start must not capture COMBAT
+    assert g._combat_return[0] == MOD_OUTDOORS
+    combat.finish(g)
+    assert g.mode == MOD_OUTDOORS and g.combat is None             # cleanly back outdoors, not stuck
+
+
 # --- overworld monsters -----------------------------------------------------
 @check("monsters: spawn nearby, close in on the avatar, attack when adjacent, and render")
 def _():
@@ -1281,6 +1299,33 @@ def _():
     g.talk_input("PLAY");  assert any("Do you like" in m for m in g.messages)
     g.talk_input("Y");     assert any("join thee" in m for m in g.messages)
     assert g.active is None                  # the yes/no answer ends the talk
+
+
+@check("recruit: out-of-order joins add the right distinct companions, no duplicates (#17)")
+def _():
+    g = Game(); g.rng.seed(1)
+    g.party.chara[0].hp_max = 900                # party-size gate passes for a full party
+    g.party.karma = [99] * 8
+
+    def recruit(loc):                            # a town's location id is class + 5
+        g._enter_location(loc, entry=(1, 15), kind="towne")
+        npc = next(n for n in g.location.npcs if n.tlkidx == 1)
+        g.party.x, g.party.y = npc.x - 1, npc.y  # stand just west of the companion
+        g.messages.clear()
+        g.handle("T"); g.handle("E")             # talk east
+        assert g.active is not None, loc
+        g.talk_input("join")
+        assert any("join thee" in m for m in g.messages), (loc, g.messages)
+        if g.active is not None:
+            g.talk_input("bye")
+
+    # OUT of roster order: Skara Brae (Shamino, class 6), Yew (Jaana, 3), Britain (Iolo, 1)
+    recruit(11); recruit(8); recruit(6)
+    n = g.party.member_count
+    assert n == 4, n
+    classes = [ord(g.party.chara[i].char_class[:1]) for i in range(n)]
+    assert classes == [2, 6, 3, 1], classes      # Avatar, Shamino, Jaana, Iolo — no duplicate Jaana
+    assert len({g.party.chara[i].name for i in range(n)}) == 4    # 4 distinct members
 
 
 # --- data-driven loop: editing plain-text JSON changes in-game dialogue ------

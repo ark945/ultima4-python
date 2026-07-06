@@ -58,7 +58,8 @@ def build() -> str:
 
     out += ["### Companions, home towns, and the join rule", "",
             f"Class index = virtue = home town. **Lord British's Castle (level-ups + healing): "
-            f"({PLACE_X[0]},{PLACE_Y[0]}).**", "",
+            f"({PLACE_X[0]},{PLACE_Y[0]}).** Note: like the original, LB advances your level on the "
+            f"**return** audience, not the first — talk, leave, and talk again to level up.", "",
             "| class | companion | home town | town (x,y) |", "|:--|:--|:--|:-:|"]
     for ci in range(8):
         # a town's location id is class+5, so its PLACE_X/Y index is class+4

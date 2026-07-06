@@ -268,12 +268,18 @@ class Conversation:
             return [f"Thou art not {self.VIRTUE_ADJ[vi]} enough for me to join thee."]
         if 100 * p.member_count + 100 > p.chara[0].hp_max:
             return ["Thou art not experienced enough for me to join thee."]
-        # Pull the companion's character template from a dormant slot of matching class.
-        slot = next((j for j in range(8)
-                     if ord(p.chara[j].char_class[:1] or "\x00") == vi), None)
-        if slot is not None and p.member_count < 8:
-            import copy
-            p.chara[p.member_count] = copy.deepcopy(p.chara[slot])
+        if p.member_count >= 8:
+            return [f"{self.d.pronoun} says: Thy party is full."]
+        # Pull the recruit from the CANONICAL companion roster (PARTY.NEW / party_template.json), which
+        # is separate from the live party — so recruiting out of roster order can't clobber the
+        # templates of companions not yet joined (C: the original keeps PARTY.NEW apart from PARTY.SAV).
+        import copy
+        from .savefile import load_template_party
+        tmpl = next((c for c in load_template_party().chara
+                     if ord((c.char_class or "\x00")[:1]) == vi), None)
+        if tmpl is None:
+            return [f"{self.d.pronoun} says: I cannot join thee."]
+        p.chara[p.member_count] = copy.deepcopy(tmpl)
         p.member_count += 1
         self.npc.tile = self.npc.gtile = self.npc.var = self.npc.tlkidx = 0  # leaves the map
         self.done = True

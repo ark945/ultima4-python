@@ -261,7 +261,7 @@ The open gate's **location** follows the current **Trammel** phase; stepping thr
 
 ### Companions, home towns, and the join rule
 
-Class index = virtue = home town. **Lord British's Castle (level-ups + healing): (86,107).**
+Class index = virtue = home town. **Lord British's Castle (level-ups + healing): (86,107).** Note: like the original, LB advances your level on the **return** audience, not the first — talk, leave, and talk again to level up.
 
 | class | companion | home town | town (x,y) |
 |:--|:--|:--|:-:|

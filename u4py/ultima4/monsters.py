@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from . import combat
+from .constants import MOD_OUTDOORS
 from .tiles import is_walkable, tile_name, SAILABLE
 
 MAX_MONSTERS = 4            # active overworld creatures cap (C: tNPC block is small)
@@ -63,6 +64,8 @@ def spawn_and_move(game) -> None:
     """C: U4_NPC.C C_5712 (move) + U4_AI.C (spawn) — once per overworld turn."""
     _cull(game)
     _move(game)
+    if game.mode != MOD_OUTDOORS:                     # _move started an encounter -> don't also spawn
+        return
     if len(game.monsters) < MAX_MONSTERS and game.rng.random() < SPAWN_CHANCE:
         _spawn(game)
 
@@ -107,7 +110,7 @@ def _move(game) -> None:
         dist0 = max(abs(dx), abs(dy))
         if dist0 <= 1:                      # adjacent -> the creature attacks
             encounter(game, m)
-            continue
+            return                          # one encounter per turn — never chain a second (#15)
         sx, sy = _sign(dx), _sign(dy)
         # Try to close in; if the direct step is blocked (e.g. a sea creature facing a coast), fall
         # back to axis steps and then perpendicular slides so it follows the shore instead of wedging.

@@ -197,7 +197,8 @@ class CombatState:
 
 def start_encounter(game, monster_tile: int) -> CombatState:
     """Begin combat (C: C_7DFE). Switches game.mode to MOD_COMBAT."""
-    game._combat_return = (game.mode, game.party.x, game.party.y)
+    if game.mode != MOD_COMBAT:                       # don't let a chained encounter capture COMBAT
+        game._combat_return = (game.mode, game.party.x, game.party.y)   # as the return mode (#15)
     game.combat = CombatState(game, monster_tile)
     game.mode = MOD_COMBAT
     game.message("*** Combat! ***")
