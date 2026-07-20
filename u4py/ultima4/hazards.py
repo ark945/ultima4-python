@@ -23,33 +23,49 @@ _SHIP_TILE_MAX = 0x13       # C: TIL_13 — avatar _tile <= this means "aboard a
 
 def _poison_field(game) -> None:        # C: U4_EVT.C C_91D1
     """Each healthy ('G') member has a 1/8 chance to be poisoned."""
+    from .audio import play_damage
+    poisoned = False
     for ch in game.party.members:
         if ch.status == "G" and game.rng.randint(0, 7) == 0:
             ch.status = "P"
+            poisoned = True
+    if poisoned:
+        play_damage()
 
 
 def _sleep_field(game) -> None:         # C: U4_EVT.C C_919A
     """Each conscious member has a 1/4 chance to fall asleep."""
+    from .audio import play_damage
+    slept = False
     for ch in game.party.members:
         if ch.conscious and game.rng.randint(0, 3) == 0:
             ch.status = "S"
+            slept = True
+    if slept:
+        play_damage()
 
 
 def _lava(game) -> bool:                # C: U4_UTIL.C C_1584
     """Burn the party on foot, or damage the hull at sea (sinking revives at Lord British).
     Returns True if the ship sank (the party was relocated)."""
     from . import upkeep
+    from .audio import play_damage
     p = game.party
     if p.tile > _SHIP_TILE_MAX:         # on foot / horse: each alive member, 1/2 -> 10..24
+        damaged = False
         for ch in p.members:
             if ch.alive and game.rng.randint(0, 1):
                 upkeep.hit_chara(ch, game.rng.randint(0, 14) + 10)   # C: U4_RND3(15)+10
+                damaged = True
+        if damaged:
+            play_damage()
         return False
     p.ship -= 10                        # at sea: the hull takes 10
     if p.ship < 0:
         p.ship = 0
         game.message("Thy Ship Sinks!")
         upkeep._revive_at_lb(game)      # C: C_0EB1
+        play_damage()
         return True
     return False
 

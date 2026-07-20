@@ -386,6 +386,8 @@ def _place_for_testing(game) -> None:
 
 def main(which: str = "ega", town: str = None) -> None:
     pygame.init()
+    from ultima4.audio import init_audio
+    init_audio()
     W, H = WINDOW_W, WINDOW_H
     screen = pygame.display.set_mode((W, H))
     pygame.display.set_caption("Ultima IV (Python port)")

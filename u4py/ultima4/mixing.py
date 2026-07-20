@@ -42,13 +42,17 @@ class MixSession:
         return [f"Added {REAGENT_NAMES[ri]}."]
 
     def _finish(self):
+        from .audio import play_cast, play_fizzle
         self.done = True
         if self.mask == 0:
+            play_fizzle()
             return ["Nothing mixed!"]
         if 0 <= self.spell < 26 and RECIPES[self.spell] == self.mask:
             m = self.game.party.mixtures
             m[self.spell] = min(99, m[self.spell] + 1)
+            play_cast()
             return ["You mix the reagents, and... Success!"]
+        play_fizzle()
         return ["You mix the reagents, and... It fizzles!"]
 
 

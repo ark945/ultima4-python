@@ -57,16 +57,21 @@ MP = (5, 15, 5, 20, 10, 15, 40, 10, 20, 30, 25, 5, 5, 20, 5, 15, 20, 45, 15, 30,
 
 def cast(game, idx: int) -> list:
     """Cast spell `idx` (0..25): spend a mixture + MP, apply the effect. C: U4_SPELL.C."""
+    from .audio import play_cast, play_fizzle
     p = game.party
     if not (0 <= idx < 26):
+        play_fizzle()
         return ["No such spell."]
     caster = p.chara[0]
     if p.mixtures[idx] == 0:
+        play_fizzle()
         return [f"Thou hast no {SPELL_NAMES[idx]} mixture!"]
     if caster.mp < MP[idx]:
+        play_fizzle()
         return ["Not enough magic points!"]
     p.mixtures[idx] -= 1
     caster.mp -= MP[idx]
+    play_cast()
     return [f"{SPELL_NAMES[idx]}!"] + _effect(game, idx)
 
 

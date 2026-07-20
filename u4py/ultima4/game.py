@@ -163,9 +163,14 @@ class Game:
 
     # --- movement (C: U4_MAP.C CMDDIR_* / C_2B19 etc.) -----------------------
     def _move(self, direction: int) -> bool:
+        from .audio import play_footstep
         if self.mode == MOD_BUILDING:
-            return self._move_building(direction)
-        return self._move_overworld(direction)
+            res = self._move_building(direction)
+        else:
+            res = self._move_overworld(direction)
+        if res:
+            play_footstep()
+        return res
 
     def _move_overworld(self, direction: int) -> bool:
         dx, dy = DIR_DX[direction], DIR_DY[direction]
@@ -345,29 +350,35 @@ class Game:
         self.pending_dir = "jimmy"
 
     def _open_door(self, direction: int) -> None:
+        from .audio import play_open, play_fizzle
         dx, dy = DIR_DX[direction], DIR_DY[direction]
         tx, ty = self.party.x + dx, self.party.y + dy
         tile = self.location.tile_at(tx, ty)
         if tile == LOCKED_DOOR:
             self.message("Can't!  'Tis locked.  (Jimmy it.)")
+            play_fizzle()
         elif tile == DOOR:
             self.location.tiles[ty * 32 + tx] = BRICK_FLOOR   # opened: walkable for a while
             self._door = (tx, ty, 5)                          # C: auto-closes after 5 turns
             self.message("Opened!")
+            play_open()
         else:
             self.message("Not here!")
 
     def _jimmy(self, direction: int) -> None:
+        from .audio import play_open, play_fizzle
         dx, dy = DIR_DX[direction], DIR_DY[direction]
         tx, ty = self.party.x + dx, self.party.y + dy
         if self.location.tile_at(tx, ty) != LOCKED_DOOR:
             self.message("Not here!")
         elif self.party.keys == 0:
             self.message("No keys left!")
+            play_fizzle()
         else:
             self.party.keys -= 1
             self.location.tiles[ty * 32 + tx] = DOOR          # now merely closed; Open it
             self.message("Unlocked!")
+            play_open()
 
     # --- Talk (C: U4_TALK.C CMD_Talk / C_A4B4) -------------------------------
     def cmd_talk(self) -> None:
@@ -643,26 +654,32 @@ class Game:
     def cmd_cast(self):      self._stub(spells.cmd_cast, "Cast")        # C: U4_SPELL.C
     # --- Klimb / Descend between building floors (C: CMD_Klimb / CMD_Descend) -
     def cmd_klimb(self) -> None:
+        from .audio import play_open, play_fizzle
         if self.mode == MOD_BUILDING and self.location is not None:
             if (self.location.tile_at(self.party.x, self.party.y) == LADDER_UP
                     and self.floor + 1 < len(self.floor_files)):
                 self.floor += 1
                 self._load_floor()                   # ladders align, so keep x/y
                 self.message("Klimb!")
+                play_open()
                 return
             self.message("Klimb what?")
+            play_fizzle()
             return
         self._todo("Klimb")                          # outdoor klimb (balloon) later
 
     def cmd_descend(self) -> None:
+        from .audio import play_open, play_fizzle
         if self.mode == MOD_BUILDING and self.location is not None:
             if (self.location.tile_at(self.party.x, self.party.y) == LADDER_DOWN
                     and self.floor > 0):
                 self.floor -= 1
                 self._load_floor()
                 self.message("Descend!")
+                play_open()
                 return
             self.message("Descend what?")
+            play_fizzle()
             return
         self._todo("Descend")
     # cmd_enter is implemented above (C: U4_EXPLO.C CMD_Enter)

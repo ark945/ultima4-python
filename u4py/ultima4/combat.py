@@ -110,6 +110,8 @@ class CombatState:
         if 0 <= nx < ARENA and 0 <= ny < ARENA and is_walkable(self.arena[ny][nx]) \
                 and self._occupied(nx, ny) is None:
             u.x, u.y = nx, ny
+            from . import audio
+            audio.play_footstep()
         self._end_member_turn()
 
     def attack(self, direction: int) -> None:
@@ -128,6 +130,8 @@ class CombatState:
                 break                      # a friendly body blocks the shot
         else:
             self.game.message("Missed -- nothing in range.")
+            from . import audio
+            audio.play_miss()
         self._end_member_turn()
 
     def pass_turn(self) -> None:
@@ -135,8 +139,10 @@ class CombatState:
 
     # --- resolution ---------------------------------------------------------
     def _strike(self, attacker: Unit, target: Unit, max_dmg: int) -> None:
+        from . import audio
         if self.game.rng.random() < 0.25:               # C: hit chance vs DEX/level
             self.game.message("Missed!")
+            audio.play_miss()
             return
         dmg = self.game.rng.randint(max_dmg // 4 + 1, max_dmg)
         target.hp -= dmg
@@ -146,11 +152,14 @@ class CombatState:
             self.game.message(f"{name} is slain!")
         else:
             self.game.message(f"{name} takes {dmg}!")
-        # mirror party-member HP back onto the real character
+            
         if target.member >= 0:
+            audio.play_damage()
             self.game.party.chara[target.member].hp = max(0, target.hp)
             if target.hp == 0:
                 self.game.party.chara[target.member].status = "D"
+        else:
+            audio.play_hit()
 
     def _end_member_turn(self) -> None:
         if self._check_end():
