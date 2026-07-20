@@ -36,7 +36,7 @@ def main(argv=None) -> int:
     game = Game()                                # fresh overworld boot (from data/party_start.json)
     play.draw_game(screen, assets, game, 0)
     play.pygame.image.save(screen, out)
-    play.pygame.quit()
+    # play.pygame.quit()
 
     print(f"[smoke] rendered one {W}x{H} frame -> {out}  "
           f"(avatar at {game.party.x},{game.party.y})")

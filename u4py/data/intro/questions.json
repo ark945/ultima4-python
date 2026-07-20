@@ -4,195 +4,195 @@
     "b_index": 1,
     "a_virtue": "Honesty",
     "b_virtue": "Compassion",
-    "text": "Entrusted to deliver an uncounted purse\nof gold, thou dost meet a poor beggar.\nDost thou A) deliver the gold knowing\nthe Trust in thee was well placed, or\nB) show Compassion, giving the beggar a\ncoin, knowing it won't be missed?"
+    "text": "汝受託送交一袋未經清點的金幣，\n途中遇見一名貧苦的乞丐。\n汝願 A) 信守所託，將金幣如數送達，\n深知此信任託付得宜，抑或\nB) 心懷慈悲，施予乞丐一枚金幣，\n深知此微薄之數無人察覺？"
   },
   {
     "a_index": 0,
     "b_index": 2,
     "a_virtue": "Honesty",
     "b_virtue": "Valor",
-    "text": "Thou has been prohibited by thy absent\nLord from joining thy friends in a close\npitched battle. Dost thou A) refrain, so\nthou may Honesty claim obedience, or\nB) show Valor, and aid thy comrades,\nknowing thou may deny it later?"
+    "text": "汝因身在遠方之君主之命，\n受禁與同袍並肩浴血鏖戰。\n汝當 A) 退避不戰，\n以保誠實之德、可宣稱奉命行事，或\nB) 顯勇敢之德，馳援同袍，\n縱知日後或可矢口否認？"
   },
   {
     "a_index": 0,
     "b_index": 3,
     "a_virtue": "Honesty",
     "b_virtue": "Justice",
-    "text": "A merchant owes thy friend money, now\nlong past due.  Thou dost see the same\nmerchant drop a purse of gold. Dost thou\nA) Honestly return the purse intact, or\nB) Justly give thy friend a portion of\nthe gold first?"
+    "text": "一名商人欠汝友人錢財，早已逾期甚久。\n汝見此商人遺落一袋金幣。\n汝願 A) 誠實地將金幣原封歸還，抑或\nB) 本於正義，先取一部分金幣\n償還汝友人？"
   },
   {
     "a_index": 0,
     "b_index": 4,
     "a_virtue": "Honesty",
     "b_virtue": "Sacrifice",
-    "text": "Thee and thy friend are valiant but\npenniless warriors.  Thou both go out to\nslay a mighty dragon.  Thy friend thinks\nhe slew it; thee did.  When asked, dost\nthou A) Truthfully claim the gold, or\nB) Allow thy friend the large reward?"
+    "text": "汝與汝之友皆驍勇而身無分文之戰士。\n二人同往斬一頭巨龍。\n汝友自以為龍乃其所殺；實則汝所殺也。\n他人問及，汝當 A) 據實領取那筆黃金，或\nB) 將厚賞讓與汝之友？"
   },
   {
     "a_index": 0,
     "b_index": 5,
     "a_virtue": "Honesty",
     "b_virtue": "Honor",
-    "text": "Thou art sworn to protect thy Lord at\nany cost, yet thou know he hath\ncommitted a crime.  Authorities ask thee\nof the affair.  Dost thou A) break thine\noath by Honestly speaking, or B) uphold\nHonor by silently keeping thine oath?"
+    "text": "汝立誓不惜代價護衛汝之主君，\n然汝深知他犯下了罪行。\n當權者就此事詢問於汝。\n汝願 A) 違背誓言，誠實道出真相，\n抑或 B) 恪守榮譽，緘默以全汝之誓？"
   },
   {
     "a_index": 0,
     "b_index": 6,
     "a_virtue": "Honesty",
     "b_virtue": "Spirituality",
-    "text": "Thy friend seeks admittance to thy\nSpiritual order. Thou art asked to vouch\nfor his purity of Spirit, of which thou\nart unsure.  Dost thou A) Honestly\nexpress thy doubt, or B) Vouch for him\nhoping for his Spiritual improvement?"
+    "text": "汝友求入汝所屬之靈性之教團。\n眾人請汝為其靈魂之純淨作保，\n而汝實心存疑慮。\n汝當 A) 誠實道出汝之疑慮，或\nB) 為其作保，望其靈性日後得以精進？"
   },
   {
     "a_index": 0,
     "b_index": 7,
     "a_virtue": "Honesty",
     "b_virtue": "Humility",
-    "text": "Thy Lord mistakenly believes he slew a\ndragon.  Thou hast proof that thy lance\nfelled the beast.  When asked, dost thou\nA) Honestly claim the kill and the\nprize, or B) Humbly permit thy Lord his\nbelief?"
+    "text": "汝之主君誤以為龍乃他親手所斬。\n汝握有證據，斬獸者實為汝之長槍。\n當被問及時，汝願\nA) 誠實宣稱此功與獎賞，抑或\nB) 謙卑地任憑汝之主君持其所信？"
   },
   {
     "a_index": 1,
     "b_index": 2,
     "a_virtue": "Compassion",
     "b_virtue": "Valor",
-    "text": "Thou dost manage to disarm thy mortal\nenemy in a duel.  He is at thy mercy.\nDost thou A) show Compassion by\npermitting him to yield, or B) slay him\nas expected of a Valiant duelist?"
+    "text": "決鬥之中，汝得以繳了不共戴天之仇敵之械。\n其命懸於汝手。\n汝當 A) 顯慈悲之德，准其認輸求饒，或\nB) 如勇敢決鬥者所應為，將其斬殺？"
   },
   {
     "a_index": 1,
     "b_index": 3,
     "a_virtue": "Compassion",
     "b_virtue": "Justice",
-    "text": "After 20 years thou hast found the\nslayer of thy best friends.  The villain\nproves to be a man who provides the sole\nsupport for a young girl.  Dost thou\nA) spare him in Compassion for the girl,\nor B) slay him in the name of Justice?"
+    "text": "二十年後，汝終尋得殺害摯友之凶手。\n那惡徒原來是一名男子，\n獨力撫養一名幼女。\n汝願 A) 為那女孩心懷慈悲，饒其性命，\n抑或 B) 以正義之名，取其性命？"
   },
   {
     "a_index": 1,
     "b_index": 4,
     "a_virtue": "Compassion",
     "b_virtue": "Sacrifice",
-    "text": "Thee and thy friends have been routed\nand ordered to retreat.  In defiance of\nthy orders, dost thou A) stop in\nCompassion to aid a wounded companion,\nor B) Sacrifice thyself to slow the\npursuing enemy, so others may escape?"
+    "text": "汝與同袍潰敗，奉命撤退。\n違抗將令，汝當 A) 心懷慈悲，\n駐足救護一名負傷之同伴，或\nB) 犧牲己身以阻緩追兵，\n使他人得以脫逃？"
   },
   {
     "a_index": 1,
     "b_index": 5,
     "a_virtue": "Compassion",
     "b_virtue": "Honor",
-    "text": "Thou art sworn to uphold a Lord who\nparticipates in the forbidden torture of\nprisoners.  Each night their cries of\npain reach thee.  Dost thou A) show\nCompassion by reporting the deeds, or\nB) Honor thy oath and ignore the deeds?"
+    "text": "汝立誓效忠之主君，\n竟參與了對囚犯的禁忌酷刑。\n每夜他們痛苦的哀號傳入汝耳。\n汝願 A) 心懷慈悲，揭發此等惡行，\n抑或 B) 恪守誓言之榮譽，視而不見？"
   },
   {
     "a_index": 1,
     "b_index": 6,
     "a_virtue": "Compassion",
     "b_virtue": "Spirituality",
-    "text": "Thou hast been taught to preserve all\nlife as sacred. A man lies fatally stung\nby a venomous serpent.  He pleads for a\nmerciful death.  Dost thou A) show\nCompassion and end his pain, or B) heed\nthy Spiritual beliefs and refuse?"
+    "text": "汝自幼受教，當以萬物之生命為神聖而珍護之。\n今有一人為毒蛇所螫，命在旦夕，\n苦苦哀求一個慈悲之死。\n汝當 A) 顯慈悲之德，了結其痛苦，或\nB) 守汝之靈性信念而拒之？"
   },
   {
     "a_index": 1,
     "b_index": 7,
     "a_virtue": "Compassion",
     "b_virtue": "Humility",
-    "text": "As one of the King's Guard, thy Captain\nhas asked that one amongst you visit\na hospital to cheer the children with\ntales of thy valiant deeds.  Dost thou\nA) Show thy Compassion and play the\nbraggart, or B) Humbly let another go?"
+    "text": "身為國王衛兵之一，汝之隊長\n指派你們之中一人前往醫院，\n以汝英勇事蹟之傳說\n撫慰院中孩童。汝願\nA) 展現慈悲，扮起誇耀之人，抑或\nB) 謙卑地讓另一人前往？"
   },
   {
     "a_index": 2,
     "b_index": 3,
     "a_virtue": "Valor",
     "b_virtue": "Justice",
-    "text": "Thou hast been sent to secure a needed\ntreaty with a distant Lord.  Thy host is\nagreeable to the proposal but insults\nthy country at dinner.  Dost thou\nA) Valiantly bear the slurs, or\nB) Justly rise and demand an apology?"
+    "text": "汝奉命前往與一遠方君主締結要緊之盟約。\n東道主雖允汝之提議，\n席間卻辱及汝之國邦。\n汝當 A) 勇敢隱忍此等羞辱，或\nB) 秉持正義，起身討一句道歉？"
   },
   {
     "a_index": 2,
     "b_index": 4,
     "a_virtue": "Valor",
     "b_virtue": "Sacrifice",
-    "text": "A mighty knight accosts thee and demands\nthy food.  Dost thou A) Valiantly refuse\nand engage the knight, or B) Sacrifice\nthy food unto the hungry knight?"
+    "text": "一名強悍的騎士攔住汝，索討汝之食糧。\n汝願 A) 英勇地拒絕，與騎士交戰，抑或\nB) 犧牲汝之食糧，獻予這飢餓的騎士？"
   },
   {
     "a_index": 2,
     "b_index": 5,
     "a_virtue": "Valor",
     "b_virtue": "Honor",
-    "text": "During battle thou art ordered to guard\nthy commander's empty tent.  The battle\ngoes poorly and thou dost yearn to aid\nthy fellows.  Dost thou A) Valiantly\nenter the battle to aid thy companions,\nor B) Honor thy post as guard?"
+    "text": "戰事之中，汝奉命守衛統帥之空帳。\n戰局不利，汝心切欲援同袍。\n汝當 A) 勇敢投身戰陣以助同伴，或\nB) 守榮譽而堅其哨位？"
   },
   {
     "a_index": 2,
     "b_index": 6,
     "a_virtue": "Valor",
     "b_virtue": "Spirituality",
-    "text": "A local bully pushes for a fight.  Dost\nthou A) Valiantly trounce the rogue, or\nB) Decline, knowing in thy Spirit that\nno lasting good will come of it?"
+    "text": "一名當地惡霸尋釁挑戰。汝願\nA) 英勇地痛擊這無賴，抑或\nB) 婉拒，深知於汝之靈性，\n此事終無善果？"
   },
   {
     "a_index": 2,
     "b_index": 7,
     "a_virtue": "Valor",
     "b_virtue": "Humility",
-    "text": "Although a teacher of music, thou art\na skillful wrestler.  Thou hast been\nasked to fight in a local championship.\nDost thou A) accept the invitation and\nValiantly fight to win, or B) Humbly\ndecline knowing thou art sure to win?"
+    "text": "汝雖為授樂之師，亦是擅鬥之角力好手。\n今有人邀汝參與本地之錦標賽。\n汝當 A) 應其邀約，勇敢力戰求勝，或\nB) 明知必勝，仍謙卑婉拒？"
   },
   {
     "a_index": 3,
     "b_index": 4,
     "a_virtue": "Justice",
     "b_virtue": "Sacrifice",
-    "text": "During a pitched battle, thou dost see\na fellow desert his post, endangering\nmany.  As he flees, he is set upon by\nseveral enemies. Dost thou A) Justly let\nhim fight alone, or B) Risk Sacrificing\nthine own life to aid him?"
+    "text": "激戰之中，汝見一名同袍棄守崗位，\n使眾人陷於險境。當他逃竄之際，\n遭數名敵人圍攻。汝願\nA) 本於正義，任他獨自奮戰，抑或\nB) 甘冒犧牲己命之險，前去相救？"
   },
   {
     "a_index": 3,
     "b_index": 5,
     "a_virtue": "Justice",
     "b_virtue": "Honor",
-    "text": "Thou hast sworn to do thy Lord's\nbidding in all.  He covets a piece of\nland and orders the owner removed.  Dost\nthou A) serve Justice refusing to act,\nthus being disgraced, or B) Honor thine\noath and unfairly evict the landowner?"
+    "text": "汝曾立誓，凡汝君主之命無不遵從。\n他覬覦一塊土地，下令逐其地主。\n汝當 A) 秉正義而拒不奉命，因此蒙羞，或\nB) 守汝之誓，不公地驅逐那地主？"
   },
   {
     "a_index": 3,
     "b_index": 6,
     "a_virtue": "Justice",
     "b_virtue": "Spirituality",
-    "text": "Thou dost believe that virtue resides\nin all people.  Thou dost see a rogue\nsteal from thy Lord.  Dost thou A) call\nhim to Justice, or B) personally try to\nsway him back to the Spiritual path of\ngood?"
+    "text": "汝深信美德存於眾人心中。\n汝見一無賴竊取汝主君之物。\n汝願 A) 將他繩之以正義，抑或\nB) 親自設法感化於他，\n使他重歸靈性向善之道？"
   },
   {
     "a_index": 3,
     "b_index": 7,
     "a_virtue": "Justice",
     "b_virtue": "Humility",
-    "text": "Unwitnessed, thou hast slain a great\ndragon in self defense.  A poor warrior\nclaims the offered reward.  Dost thou\nA) Justly step forward to claim the\nreward, or B) Humbly go about life,\nsecure in thy self esteem?"
+    "text": "無人目睹，汝為自衛而斬殺了一頭巨龍。\n一名貧苦戰士前來認領所懸之賞。\n汝當 A) 秉正義，挺身領取那賞，或\nB) 謙卑度日，安於汝之自尊？"
   },
   {
     "a_index": 4,
     "b_index": 5,
     "a_virtue": "Sacrifice",
     "b_virtue": "Honor",
-    "text": "Thou art a bounty hunter sworn to return\nan alleged murder.  After his capture\nthou believest him to be innocent.  Dost\nthou A) Sacrifice thy sizable bounty\nfor thy belief, or B) Honor thy oath to\nreturn him as thou hast promised?"
+    "text": "汝乃賞金獵人，立誓押回一名被控的殺人犯。\n將他擒獲之後，汝卻深信他是無辜的。\n汝願 A) 為汝之信念，犧牲那筆可觀的賞金，\n抑或 B) 信守榮譽之誓，\n依約將他押回？"
   },
   {
     "a_index": 4,
     "b_index": 6,
     "a_virtue": "Sacrifice",
     "b_virtue": "Spirituality",
-    "text": "Thou hast spent thy life in charitable\nand righteous work.  Thine uncle the\ninnkeeper lies ill and asks you to take\nover his tavern.  Dost thou A) Sacrifice\nthy life of purity to aid thy kin, or\nB) decline & follow thy Spirit's call?"
+    "text": "汝畢生行慈善與正直之事。\n汝之叔父乃一旅店主人，今臥病在床，\n求汝接掌其酒館。\n汝當 A) 犧牲汝清修之生，以助汝之至親，或\nB) 婉拒，追隨汝靈性之召喚？"
   },
   {
     "a_index": 4,
     "b_index": 7,
     "a_virtue": "Sacrifice",
     "b_virtue": "Humility",
-    "text": "Thou art an elderly, wealthy eccentric.\nThy end is near. Dost thou A) donate all\nthy wealth to feed hundreds of starving\nchildren, and receive public adulation,\nor B) Humbly live out thy life, willing\nthy fortune to thy heirs?"
+    "text": "汝乃年邁富有的怪人，大限將至。\n汝願 A) 將全部財富捐出，\n餵養數百名挨餓的孩童，\n並受眾人的讚頌，抑或\nB) 謙卑地度過餘生，\n將財產遺贈予汝之子嗣？"
   },
   {
     "a_index": 5,
     "b_index": 6,
     "a_virtue": "Honor",
     "b_virtue": "Spirituality",
-    "text": "In thy youth thou pledged to marry thy\nsweetheart.  Now thou art on a sacred\nquest in distant lands.  Thy sweetheart\nasks thee to keep thy vow.  Dost thou\nA) Honor thy pledge to wed, or B) follow\nthy Spiritual crusade?"
+    "text": "汝於年少之時，曾立誓迎娶汝之心上人。\n今汝身負神聖使命，遠在他鄉。\n汝之心上人求汝信守誓約。\n汝當 A) 守榮譽，履汝成婚之諾，或\nB) 追隨汝靈性之征途？"
   },
   {
     "a_index": 5,
     "b_index": 7,
     "a_virtue": "Honor",
     "b_virtue": "Humility",
-    "text": "Thou art at a crossroads in thy life.\nDost thou A) Choose the Honorable life\nof a Paladin, striving for Truth and\nCourage, or B) Choose the Humble life\nof a Shepherd, and a world of simplicity\nand peace?"
+    "text": "汝正立於人生的十字路口。\n汝願 A) 選擇聖騎士那榮譽的一生，\n為真理與勇氣而奮鬥，抑或\nB) 選擇牧人那謙卑的一生，\n享一個質樸與安寧的世界？"
   },
   {
     "a_index": 6,
     "b_index": 7,
     "a_virtue": "Spirituality",
     "b_virtue": "Humility",
-    "text": "Thy parents wish thee to become an\napprentice. Two positions are available.\nDost thou A) Become an acolyte in the\nSpiritual order, or B) Become an\nassistant to a humble village cobbler?"
+    "text": "汝之雙親願汝拜師為徒。\n今有二缺可選。\n汝當 A) 入靈性之教團為侍僧，或\nB) 入一謙卑之鄉村鞋匠門下為助手？"
   }
 ]

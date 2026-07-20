@@ -4,27 +4,27 @@
       {
         "row": 14,
         "col": 2,
-        "text": "In another world, in a time to come."
+        "text": "於另一世界,於未來之時。"
       },
       {
         "row": 16,
         "col": 15,
-        "text": "Options:"
+        "text": "選項:"
       },
       {
         "row": 17,
         "col": 11,
-        "text": "Return to the view"
+        "text": "返回畫面"
       },
       {
         "row": 18,
         "col": 11,
-        "text": "Journey Onward"
+        "text": "啟程冒險"
       },
       {
         "row": 19,
         "col": 11,
-        "text": "Initiate New Game"
+        "text": "開始新遊戲"
       },
       {
         "row": 21,
@@ -40,17 +40,17 @@
     "options": [
       {
         "row": 17,
-        "label": "Return to the view",
+        "label": "返回畫面",
         "action": "return_to_view"
       },
       {
         "row": 18,
-        "label": "Journey Onward",
+        "label": "啟程冒險",
         "action": "journey_onward"
       },
       {
         "row": 19,
-        "label": "Initiate New Game",
+        "label": "開始新遊戲",
         "action": "new_game"
       }
     ],

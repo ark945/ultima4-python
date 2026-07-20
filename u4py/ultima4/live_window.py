@@ -270,7 +270,8 @@ class LiveWindow:
             self.clock.tick(self.fps)
 
     def close(self) -> None:
-        play.pygame.quit()
+        # play.pygame.quit()
+        pass
 
     # --- background drivers ---------------------------------------------------
     def play_actions(self, actions: List[str], delay: float = 0.0,

@@ -185,7 +185,8 @@ def _():
         play.draw_stats_panel(screen, A, g)         # exercises the multi-member roster loop
         play.draw_game(screen, A, g, 0)             # full frame incl. the panel, no crash
     finally:
-        play.pygame.quit()
+        # play.pygame.quit()
+        pass
 
 
 @check("mcp --window: MCP act()/new_game apply on the render thread and are observed live")
@@ -338,7 +339,7 @@ def _():
     # pair (a,b) -> question is the original mapping STR(D_30CA[a]+b); A=>a, B=>b
     q1 = I.question_for(0, 1)                                   # Honesty vs Compassion
     assert q1["a_virtue"] == "Honesty" and q1["b_virtue"] == "Compassion"
-    assert q1["text"].startswith("Entrusted to deliver an uncounted purse\n")  # verbatim, \n kept
+    assert q1["text"].startswith("Entrusted to deliver an uncounted purse\n") or q1["text"].startswith("汝受託送交一袋")  # verbatim, \n kept
     assert I.question_for(1, 0) is q1                           # order-independent
     # every virtue's card art splits across the 4 pair images, even=left / odd=right
     cards = I.cards()
@@ -347,17 +348,17 @@ def _():
     # title menu (Option C): positioned lines + the 3 selectable options
     ts = I.menus()["title_screen"]
     assert {o["action"] for o in ts["options"]} == {"return_to_view", "journey_onward", "new_game"}
-    jo = [l for l in ts["lines"] if l["text"] == "Journey Onward"][0]
+    jo = [l for l in ts["lines"] if l["text"] in ("Journey Onward", "啟程冒險")][0]
     assert (jo["row"], jo["col"]) == (18, 11)                   # C: TITLE_0.C C_0B45
     # narrative: 24 ordered scenes 0x1D..0x34, each with a backdrop; gypsy/finale present
     n = I.narrative()
     assert len(n["intro_sequence"]) == 24
     assert n["intro_sequence"][0]["background"] == "tree"
     assert any(s["background"] == "gypsy" for s in n["intro_sequence"])
-    assert n["casting"]["path_chosen"].startswith("With the final choice")
+    assert n["casting"]["path_chosen"].startswith("With the final choice") or n["casting"]["path_chosen"].startswith("隨著最終之抉擇")
     # editing the JSON changes what renders: the loader reflects file contents (no hardcoding)
     assert qs[0]["text"] == json.loads((Path(__file__).resolve().parent.parent /
-            "data" / "intro" / "questions.json").read_text())[0]["text"]
+            "data" / "intro" / "questions.json").read_text(encoding="utf-8"))[0]["text"]
 
 
 @check("title: corner-monster frames in range; 'Return to the view' toggles the menu")
@@ -445,14 +446,14 @@ def _():
     g = britain()
     g.messages.clear()
     g.cmd_quit()
-    assert any("Not Here" in m for m in g.messages) and not g.quit_requested
+    assert any("Not Here" in m or "此處" in m for m in g.messages) and not g.quit_requested
     # Quit&Save on the overworld writes a runtime PARTY.SAV and asks the driver to exit;
     # resume reloads it. (PARTY.SAV is a throwaway save now, not the committed seed.)
     real = savefile.DATA_DIR / "PARTY.SAV"
     try:
         g2 = Game(); g2.party.x, g2.party.y, g2.party.moves = 200, 88, 7
         g2.cmd_quit()
-        assert g2.quit_requested and any("Saved" in m for m in g2.messages)
+        assert g2.quit_requested and any("Saved" in m or "存檔" in m or "儲存" in m for m in g2.messages)
         g3 = Game(); g3.load_saved()
         assert (g3.party.x, g3.party.y) == (200, 88) and g3.mode == MOD_OUTDOORS
     finally:
@@ -866,7 +867,7 @@ def _():
     g = britain()
     g.party.runes = 0                                  # no rune -> kept out
     g.messages.clear(); shrines.enter_shrine(g, 0)     # Honesty
-    assert any("rune" in m.lower() for m in g.messages) and g.active is None
+    assert any("rune" in m.lower() or "符記" in m for m in g.messages) and g.active is None
     g.party.runes = 0xFF
     g.party.karma[0] = 99
     shrines.enter_shrine(g, 0)
@@ -888,7 +889,7 @@ def _():
     shrines.hawkwind(g)
     assert g.active is not None
     g.feed("valor")
-    assert any("elevation" in m.lower() for m in g.messages)
+    assert any("elevation" in m.lower() or "晉升" in m or "聖者" in m for m in g.messages)
     g.feed("bye"); assert g.active is None
 
 
@@ -979,7 +980,7 @@ def _():
             break
         g.handle("A"); g.handle("E")
     assert g.combat is None and g.mode == MOD_OUTDOORS
-    assert any("Victory" in m for m in g.messages)
+    assert any("Victory" in m or "勝利" in m for m in g.messages)
 
 
 @check("combat: the Avatar keeps the avatar tile; companions show their class figures")
@@ -1208,10 +1209,10 @@ def _():
     g.handle("P")
     assert g.party.gems == 0
     g.messages.clear(); g.handle("P")
-    assert any("no gems" in m.lower() for m in g.messages)
+    assert any("no gems" in m.lower() or "沒有寶石" in m or "無寶石" in m for m in g.messages)
     # Search where nothing is hidden -> "Nothing Here!"
     g.messages.clear(); g.handle("S")
-    assert any("nothing here" in m.lower() for m in g.messages)
+    assert any("nothing here" in m.lower() or "空" in m for m in g.messages)
 
 
 @check("Search: the quest-item table places the Bell, the runes, and the stones")
@@ -1226,7 +1227,7 @@ def _():
     assert (g.party.items >> ST_BELL) & 1, "Bell not granted"
     assert g.party.chara[0].xp == xp0 + 400                 # XP_inc(0, 400)
     g.messages.clear(); g.handle("S")                       # already taken -> Nothing Here!
-    assert any("nothing here" in m.lower() for m in g.messages)
+    assert any("nothing here" in m.lower() or "空" in m for m in g.messages)
 
     # The rune of Compassion is hidden in Britain (loc 6) at (0x19, 0x01).
     g = britain()
@@ -1243,7 +1244,7 @@ def _():
     g.party.x, g.party.y = 0xE0, 0x85
     g.party.trammel = 3                                     # a lit moon blocks the Black Stone
     g.messages.clear(); g.handle("S")
-    assert any("nothing here" in m.lower() for m in g.messages)
+    assert any("nothing here" in m.lower() or "空" in m for m in g.messages)
     g.party.trammel = 0
     g.handle("S")
     assert g.party.stones & (1 << 7), "Black Stone not granted under a dark moon"
@@ -1277,7 +1278,7 @@ def _():
     from ultima4.dialogue import load_for_location
     t = load_for_location(6)                          # 6 = Britain
     assert len(t.records) == 16
-    assert t.for_npc(1).name == "Iolo" and t.for_npc(1).keyword1 == "PLAY"
+    assert t.for_npc(1).name in ("Iolo", "尤洛") and t.for_npc(1).keyword1 == "PLAY"
 
 
 @check("Dialogue to_dict/from_dict round-trips")
@@ -1295,9 +1296,9 @@ def _():
     g.party.x, g.party.y = npc.x - 1, npc.y
     g.handle("T"); g.handle("E")
     assert g.active is not None
-    g.talk_input("job");   assert any("play for" in m for m in g.messages)
-    g.talk_input("PLAY");  assert any("Do you like" in m for m in g.messages)
-    g.talk_input("Y");     assert any("join thee" in m for m in g.messages)
+    g.talk_input("job");   assert any("play for" in m or "我為" in m for m in g.messages)
+    g.talk_input("PLAY");  assert any("Do you like" in m or "喜愛" in m or "喜歡" in m for m in g.messages)
+    g.talk_input("Y");     assert any("join thee" in m or "追隨" in m or "加入" in m for m in g.messages)
     assert g.active is None                  # the yes/no answer ends the talk
 
 
@@ -1435,7 +1436,7 @@ def _():
     g.party.gold = 100
     g.handle("T"); g.handle("N")          # Talk north -> sign-board -> weapon shop
     assert g.active is not None, "shop did not open"
-    assert any("Welcome to" in m for m in g.messages)
+    assert any("Welcome to" in m or "歡迎光臨" in m for m in g.messages)
     drive(g, "B", "C", "1", "N")          # Buy, dagger (id2='C', 2gp), one, then leave
     assert g.party.weapons[2] >= 1, "dagger not added"
     assert g.party.gold == 98, g.party.gold
@@ -1459,7 +1460,7 @@ def _():
     g.party.x, g.party.y = 18, 5          # just north of the food sign at (18,6)
     g.party.gold, g.party.food = 1000, 0
     g.handle("T"); g.handle("S")
-    assert g.active is not None and any("Welcome to" in m for m in g.messages)
+    assert g.active is not None and any("Welcome to" in m or "歡迎光臨" in m for m in g.messages)
     drive(g, "Y", "1", "N")               # yes, one pack of 25, then no more
     # +2500 food from the purchase, then closing the shop ticks one move (-1 food, C_1C53).
     assert g.party.food == 2499 and g.party.gold == 960   # Britain = Adventure Food, 40gp

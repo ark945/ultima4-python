@@ -147,13 +147,17 @@ class UltimaEnv:
             talk = g._talk_data()
         except Exception:
             talk = None
-        want = name.strip().lower()
+        from .translation import translate, clean_key
+        want_zh = clean_key(translate(name))
+        want_en = clean_key(name)
         for n in g.location.npcs:
             d = talk.for_npc(n.tlkidx) if (talk and n.tlkidx) else None
-            if d and d.name and d.name.lower() == want:
-                return {"found": True, "name": d.name, "x": n.x, "y": n.y,
-                        "dx": n.x - g.party.x, "dy": n.y - g.party.y, "tlkidx": n.tlkidx,
-                        "recruitable": self._recruitable(g.party.loc) if n.tlkidx == 1 else None}
+            if d and d.name:
+                name_clean = clean_key(d.name)
+                if name_clean == want_en or name_clean == want_zh:
+                    return {"found": True, "name": d.name, "x": n.x, "y": n.y,
+                            "dx": n.x - g.party.x, "dy": n.y - g.party.y, "tlkidx": n.tlkidx,
+                            "recruitable": self._recruitable(g.party.loc) if n.tlkidx == 1 else None}
         return {"found": False, "reason": f"no NPC named {name!r} in {g.location.name}"}
 
     def _moons(self) -> Dict[str, Any]:

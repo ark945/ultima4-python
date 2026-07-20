@@ -1,49 +1,49 @@
 [
   {
     "index": 0,
-    "virtue": "Honesty",
+    "virtue": "誠實",
     "image": "honcom",
     "side": "left"
   },
   {
     "index": 1,
-    "virtue": "Compassion",
+    "virtue": "慈悲",
     "image": "honcom",
     "side": "right"
   },
   {
     "index": 2,
-    "virtue": "Valor",
+    "virtue": "勇敢",
     "image": "valjus",
     "side": "left"
   },
   {
     "index": 3,
-    "virtue": "Justice",
+    "virtue": "正義",
     "image": "valjus",
     "side": "right"
   },
   {
     "index": 4,
-    "virtue": "Sacrifice",
+    "virtue": "犧牲",
     "image": "sachonor",
     "side": "left"
   },
   {
     "index": 5,
-    "virtue": "Honor",
+    "virtue": "榮譽",
     "image": "sachonor",
     "side": "right"
   },
   {
     "index": 6,
-    "virtue": "Spirituality",
+    "virtue": "靈性",
     "image": "spirhum",
     "side": "left"
   },
   {
     "index": 7,
-    "virtue": "Humility",
+    "virtue": "謙卑",
     "image": "spirhum",
     "side": "right"
   }

@@ -621,7 +621,8 @@ class Game:
                 f"on {tile_name(t)}  moves={self.party.moves}  gold={self.party.gold}")
 
     def message(self, text: str) -> None:
-        self.messages.append(text)
+        from . import translation
+        self.messages.append(translation.translate(text))
 
     # --- command stubs --------------------------------------------------------
     # The remaining CMD_* keys are wired to their v1 modules (combat/spells/items/transport/

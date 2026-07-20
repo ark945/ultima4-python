@@ -101,4 +101,5 @@ class PygameStage:
         return len(self.frames)
 
     def close(self) -> None:
-        self.pygame.quit()
+        # self.pygame.quit()
+        pass

@@ -14,7 +14,7 @@ INTRO_DIR = Path(__file__).resolve().parent.parent / "data" / "intro"
 
 @lru_cache(maxsize=None)
 def _load(name: str):
-    return json.loads((INTRO_DIR / f"{name}.json").read_text())
+    return json.loads((INTRO_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
 
 def questions() -> list:

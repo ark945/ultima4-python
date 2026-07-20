@@ -77,15 +77,44 @@ def load_font_glyphs(which: str):
     return out
 
 
-def blit_text(screen, glyphs, text: str, x: int, y: int) -> None:
-    """Draw a string at (x,y) using the CHARSET font, one glyph per byte. Bytes past the
-    font's glyph count render as space. The font is its native EGA color (white) — the
-    original used a single font color, so we don't recolor."""
-    for ch in text:
-        i = ord(ch)
-        if i < len(glyphs):
-            screen.blit(glyphs[i], (x, y))
-        x += FONT_PX
+_font_cache = {}
+
+def get_font(size):
+    if size not in _font_cache:
+        font = None
+        for font_name in ["microsoftjhenghei", "simhei", "sans-serif", "arial"]:
+            try:
+                font = pygame.font.SysFont(font_name, size)
+                if font:
+                    break
+            except Exception:
+                pass
+        if not font:
+            try:
+                font = pygame.font.Font(None, size)
+            except Exception:
+                pass
+        _font_cache[size] = font
+    return _font_cache[size]
+
+
+def blit_text(screen, font_obj, text: str, x: int, y: int) -> None:
+    """Draw a string at (x,y) using either the high-resolution font or glyphs list."""
+    if not text or not text.strip():
+        return
+    if hasattr(font_obj, "render"):
+        try:
+            surf = font_obj.render(text, True, (255, 255, 255))
+            screen.blit(surf, (x, y))
+        except pygame.error:
+            pass
+    else:
+        # Fallback to character-by-character glyph blitting
+        for ch in text:
+            i = ord(ch)
+            if i < len(font_obj):
+                screen.blit(font_obj[i], (x, y))
+            x += FONT_PX
 
 
 def load_moon_glyphs(which: str):
@@ -110,6 +139,7 @@ class Assets:
         self.tiles = load_tiles(which)
         self.font_glyphs = load_font_glyphs(which)
         self.moon_glyphs = load_moon_glyphs(which)
+        self.font = get_font(16)
 
 
 def draw_stats_panel(screen, A: "Assets", game) -> None:
@@ -118,19 +148,30 @@ def draw_stats_panel(screen, A: "Assets", game) -> None:
     cols) and the status letter G/P/S/D; below the roster, food and — aboard ship the hull, else
     gold. The original draws these at char cols 24 (name), 35 (HP), 38 (status), rows 1..8, and
     row 10 for food/gold; we lay them out the same way in the right-hand panel."""
+    # Companion name mapping
+    NAMES_ZH = {
+        "Iolo": "尤洛", "Shamino": "夏米諾", "Dupre": "杜普雷", "Katrina": "卡翠娜",
+        "Sentri": "山崔", "Gwenno": "葛溫諾", "Jaana": "佳娜", "Julius": "朱力斯",
+        "Mariah": "瑪利亞", "Geoffrey": "傑弗里", "Deparne": "德帕恩"
+    }
+    STATUS_ZH = {"G": "好", "P": "毒", "S": "眠", "D": "亡"}
+
     p = game.party
     x0 = VIEW * SCALE + FONT_PX // 2                 # just right of the map viewport
     def y(row):                                     # authentic char row -> pixel y
         return 4 + row * FONT_PX
     pygame.draw.line(screen, (60, 60, 60), (VIEW * SCALE, 0), (VIEW * SCALE, VIEW * SCALE))
     for i, c in enumerate(p.members):               # members = chara[:member_count]
-        blit_text(screen, A.font_glyphs, f"{i + 1}-{(c.name or '')[:8]}", x0, y(i + 1))
-        blit_text(screen, A.font_glyphs, f"{c.hp:>3}{c.status}", x0 + 11 * FONT_PX, y(i + 1))
-    blit_text(screen, A.font_glyphs, f"F:{p.food // 100:04d}", x0, y(10))     # C_0CF7 food/100
+        name = c.name or ""
+        name_zh = NAMES_ZH.get(name, name)[:8]
+        status_zh = STATUS_ZH.get(c.status, c.status)
+        blit_text(screen, A.font, f"{i + 1}-{name_zh}", x0, y(i + 1))
+        blit_text(screen, A.font, f"{c.hp:>3} {status_zh}", x0 + 11 * FONT_PX, y(i + 1))
+    blit_text(screen, A.font, f"F:{p.food // 100:04d}", x0, y(10))     # C_0CF7 food/100
     if p.tile < 0x14:                               # aboard a ship (C: _tile < TIL_14) -> hull
-        blit_text(screen, A.font_glyphs, f"SHP:{p.ship:02d}", x0 + 8 * FONT_PX, y(10))
+        blit_text(screen, A.font, f"SHP:{p.ship:02d}", x0 + 8 * FONT_PX, y(10))
     else:
-        blit_text(screen, A.font_glyphs, f"G:{p.gold:04d}", x0 + 8 * FONT_PX, y(10))
+        blit_text(screen, A.font, f"G:{p.gold:04d}", x0 + 8 * FONT_PX, y(10))
 
 
 def draw_game(screen, A: "Assets", game, phase: int = 0, banner: str = None,
@@ -156,7 +197,7 @@ def draw_game(screen, A: "Assets", game, phase: int = 0, banner: str = None,
         screen.blit(A.tiles[AVATAR_TILE], (RADIUS * px, RADIUS * px))
     draw_stats_panel(screen, A, game)               # party roster column on the right (C: dspl_Stats)
     y0 = VIEW * SCALE + 6
-    blit_text(screen, A.font_glyphs, game.status_line(), 6, y0)
+    blit_text(screen, A.font, game.status_line(), 6, y0)
     cols = (WINDOW_W - 12) // FONT_PX
     lines = []
     for msg in game.messages:
@@ -164,15 +205,15 @@ def draw_game(screen, A: "Assets", game, phase: int = 0, banner: str = None,
             lines.extend(wrap_text(seg, cols))
     max_rows = (PANEL_H - FONT_PX - 8 - (FONT_PX + 4 if game.active else 0)) // FONT_PX
     for k, line in enumerate(lines[-max_rows:]):
-        blit_text(screen, A.font_glyphs, line, 6, y0 + FONT_PX + 4 + k * FONT_PX)
+        blit_text(screen, A.font, line, 6, y0 + FONT_PX + 4 + k * FONT_PX)
     if game.active is not None and input_text is not None:
-        blit_text(screen, A.font_glyphs, "> " + input_text + "_", 6,
+        blit_text(screen, A.font, "> " + input_text + "_", 6,
                   VIEW * SCALE + PANEL_H - FONT_PX - 2)
     if banner:                                       # demo/agent caption strip — at the BOTTOM so it
         by = WINDOW_H - FONT_PX - 6                   # never covers the moons at the top of the map
         bar = pygame.Surface((WINDOW_W, FONT_PX + 6)); bar.set_alpha(210); bar.fill((0, 0, 40))
         screen.blit(bar, (0, by))
-        blit_text(screen, A.font_glyphs, banner[:cols], 6, by + 3)
+        blit_text(screen, A.font, banner[:cols], 6, by + 3)
     # The moons (C: U4_ANIM.C — top-center of the map) draw last, on the now-clear top strip.
     if game.mode == MOD_OUTDOORS:
         cx = (VIEW * SCALE - 2 * CHAR_PX) // 2
@@ -197,6 +238,22 @@ def _native_text(surf, glyphs, text: str, col: int, row: int) -> None:
         if i < len(glyphs):
             surf.blit(glyphs[i], (x, row * 8))
         x += 8
+
+
+def _native_text_hr(screen, text: str, col: int, row: int, scale_x: float, scale_y: float) -> None:
+    """Render high-resolution text directly on the scaled screen surface."""
+    if not text or not text.strip():
+        return
+    x = int(col * 8 * scale_x)
+    y = int(row * 8 * scale_y)
+    font_size = int(8 * scale_y)
+    font = get_font(font_size)
+    if font:
+        try:
+            surf = font.render(text, True, (255, 255, 255))
+            screen.blit(surf, (x, y))
+        except pygame.error:
+            pass
 
 
 def run_title(screen, which: str, game, scripted=None) -> bool:
@@ -247,20 +304,24 @@ def run_title(screen, which: str, game, scripted=None) -> bool:
             for card, dst_x in ((intro_data.card_for(a), 8), (intro_data.card_for(b), 216)):
                 src_x = 8 if card["side"] == "left" else 216
                 surf.blit(pic(card["image"]), (dst_x, 12), (src_x, 12, 96, 124))
+        
+        # Clear the text window at the bottom of the 320x200 canvas if in narrative mode
+        if s["mode"] not in ("menu", "view"):
+            surf.fill((0, 0, 0), (0, 19 * 8, 320, 200 - 19 * 8))
+
+        screen.fill((0, 0, 0))
+        screen.blit(pygame.transform.scale(surf, (W, SH)), (0, 0))
+        
+        scale_x = W / 320.0
+        scale_y = SH / 200.0
         if s["mode"] == "menu":
             for ln in s["lines"]:                       # Option C menu at its source row/col
-                _native_text(surf, glyphs, ln["text"], ln["col"], ln["row"])
+                _native_text_hr(screen, ln["text"], ln["col"], ln["row"], scale_x, scale_y)
         elif s["mode"] == "view":
             pass                                        # menu hidden — just the animated title
         else:                                           # narrative/question/reveal: window at row 19
-            # The original blits the picture only 152px tall and clears the bottom 48px to black
-            # as the text window (C: TITLE_1.C Gra_3(40,152,..) + Gra_5). Match it so text is always
-            # legible on a black strip, not over bright art.
-            surf.fill((0, 0, 0), (0, 19 * 8, 320, 200 - 19 * 8))
             for k, line in enumerate(s["lines"]):
-                _native_text(surf, glyphs, line, 0, 19 + k)
-        screen.fill((0, 0, 0))
-        screen.blit(pygame.transform.scale(surf, (W, SH)), (0, 0))
+                _native_text_hr(screen, line, 0, 19 + k, scale_x, scale_y)
         pygame.display.flip()
 
     while not director.done:

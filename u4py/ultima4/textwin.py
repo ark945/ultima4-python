@@ -19,34 +19,58 @@ LB_PAUSE_ROWS = 12     # in-game pause cadence (U4_LB.C C_E3D2)
 
 
 def wrap_text(text: str, cols: int = INTRO_COLS) -> list:
-    """Greedy word-wrap to `cols`, honoring existing '\\n' as hard breaks.
+    """Greedy word-wrap to `cols`, honoring existing '\\n' as hard breaks, supporting CJK.
 
     Original intro prose is pre-wrapped with embedded newlines (D_2EE6); we preserve
     those exactly and only re-flow paragraphs that exceed the window width (e.g. after
     a developer edits a question), so faithful text is untouched and edited text fits.
     """
     out = []
+    
+    def visual_len(s: str) -> int:
+        length = 0
+        for ch in s:
+            if ord(ch) > 0xff:
+                length += 2
+            else:
+                length += 1
+        return length
+
     for para in text.split("\n"):
         if para == "":
             out.append("")
             continue
-        line = ""
-        for word in para.split(" "):
-            # a single word longer than the window: hard-split it
-            while len(word) > cols:
-                if line:
+        
+        has_cjk = any(ord(ch) > 0xff for ch in para)
+        if not has_cjk:
+            line = ""
+            for word in para.split(" "):
+                # a single word longer than the window: hard-split it
+                while visual_len(word) > cols:
+                    if line:
+                        out.append(line)
+                        line = ""
+                    out.append(word[:cols])
+                    word = word[cols:]
+                if not line:
+                    line = word
+                elif visual_len(line) + 1 + visual_len(word) <= cols:
+                    line += " " + word
+                else:
                     out.append(line)
-                    line = ""
-                out.append(word[:cols])
-                word = word[cols:]
-            if not line:
-                line = word
-            elif len(line) + 1 + len(word) <= cols:
-                line += " " + word
-            else:
+                    line = word
+            out.append(line)
+        else:
+            line = ""
+            for ch in para:
+                ch_len = 2 if ord(ch) > 0xff else 1
+                if visual_len(line) + ch_len > cols:
+                    out.append(line)
+                    line = ch
+                else:
+                    line += ch
+            if line:
                 out.append(line)
-                line = word
-        out.append(line)
     return out
 
 

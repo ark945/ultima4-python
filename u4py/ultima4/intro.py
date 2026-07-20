@@ -144,8 +144,17 @@ class IntroDirector:
             self._advance_page()
 
     def _menu_key(self, ch):
-        action = next((o["action"] for o in self._menu["options"]
-                       if o["label"][0].upper() == ch), None)
+        action = None
+        if ch == "R":
+            action = "return_to_view"
+        elif ch == "I":
+            action = "new_game"
+        elif ch == "J":
+            action = "journey_onward"
+            
+        if not action:
+            action = next((o["action"] for o in self._menu["options"]
+                           if o["label"][0].upper() == ch), None)
         if action == "new_game":
             self._begin_narrative()
         elif action == "journey_onward":
